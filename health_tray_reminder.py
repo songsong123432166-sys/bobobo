@@ -23,7 +23,7 @@ except ImportError:
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "1.2.0"
+APP_VERSION = "1.3.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 WORK_START = datetime_time(8, 30)
@@ -32,6 +32,29 @@ WORK_END = datetime_time(17, 0)
 SIT_INTERVAL_MINUTES = 45
 WATER_INTERVAL_MINUTES = 60
 WATER_SNOOZE_MINUTES = 10
+
+SIT_REMINDERS = [
+    "出去拔根小烟，顺便让腿开机",
+    "该离开椅子一会儿了，出去透口气",
+    "屁股申请解绑椅子，批准一下",
+    "站起来晃一圈，别和椅子处太久",
+    "出去走两步，假装自己很忙",
+    "腿都快忘了自己是腿了，起来用一下",
+    "起来活动一下，顺便看看窗外真实世界",
+    "出去放个风，让脑子换换气",
+    "椅子占用时间过长，建议强制下线",
+    "站起来巡逻一圈，检查一下公司空气",
+    "出去溜达两步，回来继续装作很专业",
+    "身体提示：需要短暂重启一下",
+    "该起身了，别把自己焊在工位上",
+    "离开屏幕一分钟，让眼睛也下个班",
+    "出去站会儿，顺便把灵魂叫回来",
+    "腿部系统提示：长期未运行",
+    "起来走走，别让椅子以为赢了",
+    "出去转一圈，给今天续点状态",
+    "站起来活动活动，顺便接杯水也行",
+    "工位先放这儿，人出去喘口气",
+]
 
 WATER_REMINDERS = [
     "给身体补点水，别让它靠意志力硬撑 💧",
@@ -228,7 +251,7 @@ def check_sit_reminder():
             return
         last_sit_reset = datetime.now()
 
-    show_notice("久坐提醒", "是时候拔一根了")
+    show_notice("久坐提醒", random.choice(SIT_REMINDERS))
 
 
 def check_water_reminder():
