@@ -1,5 +1,6 @@
 import sys
 import time
+import random
 import threading
 from datetime import datetime, timedelta, time as datetime_time
 from pathlib import Path
@@ -22,7 +23,7 @@ except ImportError:
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 WORK_START = datetime_time(8, 30)
@@ -31,6 +32,29 @@ WORK_END = datetime_time(17, 0)
 SIT_INTERVAL_MINUTES = 45
 WATER_INTERVAL_MINUTES = 60
 WATER_SNOOZE_MINUTES = 10
+
+WATER_REMINDERS = [
+    "给身体补点水，别让它靠意志力硬撑 💧",
+    "咖啡负责清醒，温水负责续命，轮到温水上场了",
+    "喉咙可能没说话，但它正在等一口水",
+    "喝一口水，让脑子从加载中回到在线",
+    "水杯已经看你很久了，给它一点存在感",
+    "少喝点浓茶，给身体来一口朴素的温柔",
+    "现在喝水，等会儿的你会偷偷感谢现在的你",
+    "补水时间到，别把自己熬成低电量模式",
+    "来一口温水，给今天的精神状态加点缓冲",
+    "喝水不是任务，是给身体发工资",
+    "你的细胞申请一点点后勤补给",
+    "别等口渴才喝水，口渴已经是在催单了",
+    "电脑要散热，人也要补水",
+    "水杯不只是桌面摆件，是你的隐藏队友",
+    "喝点水，让咖啡因别一个人扛全场",
+    "现在起身接水，顺便让眼睛休息十秒",
+    "给肾一点掌声，也给它一点水",
+    "一口水下去，疲惫不一定消失，但仪式感到了",
+    "别让嘴唇先发现你缺水",
+    "喝水小回合开始，目标：保持清醒又不焦躁",
+]
 
 last_sit_reset = datetime.now()
 last_water_reset = datetime.now()
@@ -102,7 +126,11 @@ def close_water_popup(window):
     window.destroy()
 
 
-def show_water_popup():
+def get_water_reminder():
+    return random.choice(WATER_REMINDERS)
+
+
+def show_water_popup(message):
     global water_popup_open
 
     if tk is None:
@@ -139,10 +167,12 @@ def show_water_popup():
 
         message = tk.Label(
             window,
-            text="少喝咖啡和浓茶，喝点温水吧 💧",
+            text=message,
             font=("Microsoft YaHei UI", 10),
             bg="#f7fbff",
             fg="#1f2937",
+            wraplength=270,
+            justify="center",
         )
         message.pack(pady=(0, 14))
 
@@ -212,8 +242,9 @@ def check_water_reminder():
             return
         last_water_reset = datetime.now()
 
-    show_notice("喝水提醒", "该补充水分了，少喝咖啡和浓茶 💧")
-    show_water_popup()
+    message = get_water_reminder()
+    show_notice("喝水提醒", message)
+    show_water_popup(message)
 
 
 def get_startup_command():
