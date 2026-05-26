@@ -23,7 +23,7 @@ except ImportError:
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.4.1"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 WORK_START = datetime_time(8, 30)
@@ -145,7 +145,8 @@ def snooze_water_timer():
 
 def close_water_popup(window):
     global water_popup_open
-    water_popup_open = False
+    with state_lock:
+        water_popup_open = False
     window.destroy()
 
 
@@ -188,7 +189,7 @@ def show_water_popup(message):
         )
         title.pack(pady=(18, 6))
 
-        message = tk.Label(
+        message_label = tk.Label(
             window,
             text=message,
             font=("Microsoft YaHei UI", 10),
@@ -197,7 +198,7 @@ def show_water_popup(message):
             wraplength=270,
             justify="center",
         )
-        message.pack(pady=(0, 14))
+        message_label.pack(pady=(0, 14))
 
         button_frame = tk.Frame(window, bg="#f7fbff")
         button_frame.pack()
