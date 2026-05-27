@@ -12,6 +12,12 @@ if not exist "%CD%\health_tray_reminder.py" (
     exit /b 1
 )
 
+if not exist "%CD%\health_reminder\app.py" (
+    echo ERROR: health_reminder package was not found in this folder.
+    pause
+    exit /b 1
+)
+
 set PYTHON_CMD=python
 python --version >nul 2>nul
 if errorlevel 1 (
@@ -62,7 +68,7 @@ if errorlevel 1 (
 
 echo.
 echo Building app...
-%PYTHON_CMD% -m PyInstaller --noconsole --name HealthReminder --distpath "%CD%\dist" --workpath "%CD%\build" --specpath "%CD%" "%CD%\health_tray_reminder.py"
+%PYTHON_CMD% -m PyInstaller -y --noconsole --name HealthReminder --distpath "%CD%\dist" --workpath "%CD%\build" --specpath "%CD%" "%CD%\health_tray_reminder.py"
 if errorlevel 1 (
     echo.
     echo ERROR: PyInstaller build failed.
