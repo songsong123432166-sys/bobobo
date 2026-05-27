@@ -6,21 +6,48 @@ from datetime import datetime, timedelta
 import schedule
 from pystray import Icon, Menu, MenuItem
 
+from .activity import ActivityMonitor
+from .camera_presence import CameraPresenceDetector
 from .config_store import load_config, normalize_clock, parse_clock, save_config
-from .constants import APP_NAME, APP_TITLE, APP_VERSION, DEFAULT_CONFIG, SIT_REMINDERS, WATER_REMINDERS
+from .constants import (
+    APP_NAME,
+    APP_TITLE,
+    APP_VERSION,
+    DEFAULT_CONFIG,
+    EVENING_REMINDERS,
+    MORNING_REMINDERS,
+    SIT_REMINDERS,
+    WATER_REMINDERS,
+)
 from .event_log import EventLog
-from .notifier import Notifier
+from .health_score import HealthScore
 from .tray_icon import create_icon_image
 from .ui import UiManager
-from .windows_integration import set_startup, start_screensaver
+from .windows_integration import get_idle_seconds, is_media_playing, set_startup, start_screensaver
 
 
 class HealthReminderApp:
     def __init__(self):
         self.config = load_config()
         self.log = EventLog()
-        self.notifier = Notifier(self.log)
+        self.health_score = HealthScore(self.log)
+        self.activity = ActivityMonitor(
+            get_idle_seconds,
+            is_media_playing,
+            self.config.get("away_after_minutes", DEFAULT_CONFIG["away_after_minutes"]),
+            self.config.get("idle_after_minutes", DEFAULT_CONFIG["idle_after_minutes"]),
+        )
+        self.camera_presence = CameraPresenceDetector(
+            self.log,
+            self.config.get("camera_detection_enabled", False),
+            self.config.get(
+                "camera_detection_interval_minutes",
+                DEFAULT_CONFIG["camera_detection_interval_minutes"],
+            ),
+        )
         self.ui = UiManager(self)
+        self.started_at = datetime.now()
+        self.meeting_started_at = datetime.now() if self.config.get("meeting_mode") else None
         self.last_sit_reset = datetime.now()
         self.last_water_reset = datetime.now()
         self.running = True
@@ -28,7 +55,8 @@ class HealthReminderApp:
         self.state_lock = threading.Lock()
 
     def notify(self, title, message):
-        self.notifier.notify(title, message)
+        self.log.write(f"{title}: {message}")
+        self.ui.show_toast(title, message)
 
     def is_work_time(self):
         now = datetime.now().time()
@@ -61,20 +89,22 @@ class HealthReminderApp:
         )
 
     def morning_notice(self):
-        self.notify("早上好", "新的一天开始了，记得多喝水，久了起来走走 💧")
+        self.notify("早上好", random.choice(MORNING_REMINDERS))
 
     def evening_notice(self):
-        self.notify("下班时间到了", "今天辛苦了，回家记得泡个温水澡放松一下 🛁")
+        self.notify("下班时间到了", random.choice(EVENING_REMINDERS))
 
     def reset_sit_timer(self, icon=None, item=None):
         with self.state_lock:
             self.last_sit_reset = datetime.now()
-        self.notify("久坐提醒", "好的，计时重新开始")
+        score = self.health_score.record_sit_break()
+        self.notify("久坐提醒", f"好的，计时重新开始。起身 +5 分，今日健康分 {score}")
 
     def reset_water_timer(self, icon=None, item=None):
         with self.state_lock:
             self.last_water_reset = datetime.now()
-        self.notify("喝水提醒", "好的，记得保持")
+        score = self.health_score.record_water()
+        self.notify("喝水提醒", f"好的，记得保持。喝水 +4 分，今日健康分 {score}")
 
     def snooze_water_timer(self):
         with self.state_lock:
@@ -84,7 +114,7 @@ class HealthReminderApp:
             )
 
     def check_sit_reminder(self):
-        if self.is_meeting_mode() or not self.is_work_time():
+        if self.is_meeting_mode() or not self.is_work_time() or not self.activity.is_available_for_reminders():
             return
 
         with self.state_lock:
@@ -96,7 +126,7 @@ class HealthReminderApp:
         self.notify("久坐提醒", random.choice(SIT_REMINDERS))
 
     def check_water_reminder(self):
-        if self.is_meeting_mode() or not self.is_work_time():
+        if self.is_meeting_mode() or not self.is_work_time() or not self.activity.is_available_for_reminders():
             return
 
         with self.state_lock:
@@ -111,14 +141,47 @@ class HealthReminderApp:
 
     def scheduler_loop(self):
         while self.running:
+            self.check_activity_state()
+            self.check_camera_presence()
             schedule.run_pending()
             self.check_sit_reminder()
             self.check_water_reminder()
             time.sleep(1)
 
+    def check_camera_presence(self):
+        result = self.camera_presence.detect_if_due()
+        if result is True:
+            if self.activity.state != "using":
+                self.activity.state = "using"
+                with self.state_lock:
+                    self.last_sit_reset = datetime.now()
+                    self.last_water_reset = datetime.now()
+                self.log.write("摄像头检测到电脑前有人，提醒计时已重新开始")
+        elif result is False and self.activity.state == "using":
+            self.activity.state = "idle"
+            self.log.write("摄像头未检测到人，进入可能离开状态")
+
+    def check_activity_state(self):
+        old_state, new_state = self.activity.refresh()
+        if old_state == new_state:
+            return
+
+        if new_state == "using":
+            with self.state_lock:
+                self.last_sit_reset = datetime.now()
+                self.last_water_reset = datetime.now()
+            self.log.write("检测到用户回到电脑前，提醒计时已重新开始")
+        elif new_state == "idle":
+            self.log.write("检测到电脑进入可能离开状态，暂停健康提醒")
+        else:
+            self.log.write("检测到电脑进入离开状态，暂停健康提醒")
+
     def get_status_text(self):
         mode = "开会模式" if self.is_meeting_mode() else "正常提醒"
         work = "工作时间内" if self.is_work_time() else "非工作时间"
+        activity = self.activity.label()
+        idle_minutes = int(self.activity.idle_minutes())
+        camera = self.camera_presence.last_result
         with self.state_lock:
             sit_next = max(
                 0,
@@ -135,36 +198,64 @@ class HealthReminderApp:
                 ),
             )
         return (
-            f"状态：{mode} / {work}\n"
+            f"状态：{mode} / {work} / 电脑{activity}\n"
+            f"空闲时间：约 {idle_minutes} 分钟\n"
+            f"摄像头检测：{camera}\n"
             f"久坐提醒：约 {sit_next} 分钟后\n"
             f"喝水提醒：约 {water_next} 分钟后\n"
             f"最近事件：{self.log.last_event}"
+        )
+
+    def get_current_sit_minutes(self):
+        with self.state_lock:
+            return (datetime.now() - self.last_sit_reset).total_seconds() / 60
+
+    def get_runtime_minutes(self):
+        return (datetime.now() - self.started_at).total_seconds() / 60
+
+    def get_health_score_text(self):
+        return self.health_score.summary_text(
+            self.get_current_sit_minutes(),
+            self.get_runtime_minutes(),
         )
 
     def apply_settings(self, new_config):
         previous_meeting = bool(self.config["meeting_mode"])
         self.config.update(new_config)
         save_config(self.config)
+        self.activity.update_thresholds(
+            self.config["away_after_minutes"],
+            self.config["idle_after_minutes"],
+        )
+        self.camera_presence.update_settings(
+            self.config["camera_detection_enabled"],
+            self.config["camera_detection_interval_minutes"],
+        )
         self.apply_startup_setting()
         self.setup_schedule()
 
         if self.config["meeting_mode"] and not previous_meeting:
+            self.meeting_started_at = datetime.now()
             self.log.write("已开启开会模式")
             if self.config["meeting_auto_screensaver"]:
                 self.start_screensaver()
         elif not self.config["meeting_mode"] and previous_meeting:
+            self._record_meeting_duration()
             self.log.write("已关闭开会模式")
 
         self.notify("设置已保存", "新的提醒设置已经生效")
 
     def toggle_meeting_mode(self, icon=None, item=None):
-        self.config["meeting_mode"] = not bool(self.config["meeting_mode"])
+        was_meeting = bool(self.config["meeting_mode"])
+        self.config["meeting_mode"] = not was_meeting
         save_config(self.config)
         if self.config["meeting_mode"]:
+            self.meeting_started_at = datetime.now()
             self.notify("开会模式", "已开启，久坐和喝水提醒会暂停")
             if self.config.get("meeting_auto_screensaver", False):
                 self.start_screensaver()
         else:
+            self._record_meeting_duration()
             self.notify("开会模式", "已关闭，提醒恢复运行")
 
     def start_screensaver(self):
@@ -174,9 +265,17 @@ class HealthReminderApp:
         self.notify("关于程序", f"{APP_TITLE} 正在运行")
 
     def quit_program(self, icon, item):
+        self._record_meeting_duration()
         self.running = False
         self.log.write("程序退出")
         icon.stop()
+
+    def _record_meeting_duration(self):
+        if self.meeting_started_at is None:
+            return
+        minutes = int((datetime.now() - self.meeting_started_at).total_seconds() / 60)
+        self.health_score.add_meeting_minutes(minutes)
+        self.meeting_started_at = None
 
     def run(self):
         self.log.write(f"程序启动：{APP_TITLE}")
@@ -195,5 +294,4 @@ class HealthReminderApp:
         )
 
         self.tray_icon = Icon(APP_NAME, create_icon_image(), APP_TITLE, menu)
-        self.notifier.set_tray_icon(self.tray_icon)
         self.tray_icon.run()
