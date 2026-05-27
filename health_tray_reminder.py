@@ -23,7 +23,7 @@ except ImportError:
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "1.4.1"
+APP_VERSION = "1.5.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 WORK_START = datetime_time(8, 30)
@@ -94,13 +94,22 @@ def is_work_time():
 
 
 def show_notice(title, message):
-    """显示 Windows 桌面通知。"""
-    notification.notify(
-        title=title,
-        message=message,
-        app_name=APP_TITLE,
-        timeout=10,
-    )
+    """显示 Windows 桌面通知，并用托盘气泡做兜底。"""
+    try:
+        notification.notify(
+            title=title,
+            message=message,
+            app_name=APP_TITLE,
+            timeout=10,
+        )
+    except Exception:
+        pass
+
+    if tray_icon is not None:
+        try:
+            tray_icon.notify(message, title)
+        except Exception:
+            pass
 
 
 def show_about(icon=None, item=None):
@@ -173,6 +182,7 @@ def show_water_popup(message):
 
         width = 320
         height = 150
+        screen_width = window.winfo_screenwidth()
         screen_height = window.winfo_screenheight()
         x = 24
         y = screen_height - height - 70
