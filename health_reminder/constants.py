@@ -4,12 +4,13 @@ from pathlib import Path
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.3.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
 CONFIG_FILE = DATA_DIR / "config.json"
 LOG_FILE = DATA_DIR / "run.log"
+HEALTH_SCORE_FILE = DATA_DIR / "health_score.json"
 
 DEFAULT_CONFIG = {
     "work_start": "08:30",
@@ -20,7 +21,34 @@ DEFAULT_CONFIG = {
     "startup_enabled": True,
     "meeting_mode": False,
     "meeting_auto_screensaver": False,
+    "away_after_minutes": 10,
+    "idle_after_minutes": 15,
+    "camera_detection_enabled": False,
+    "camera_detection_interval_minutes": 30,
 }
+
+MORNING_REMINDERS = [
+    "新的一天开机了，先喝口水再开始硬扛",
+    "早八半打卡成功，今天也别忘了照顾自己",
+    "上班模式启动，水杯和腿都安排上",
+    "早上好，先别急着卷，喝口水缓一缓",
+    "今天的工位已上线，身体也记得上线",
+    "新的一天开始了，别一坐就是一上午",
+    "早上好，咖啡可以有，水也别缺席",
+    "开工啦，先给身体一点启动资金：一口水",
+    "今天也要做人，不要变成椅子的配件",
+    "早八半到了，先活动一下再进入战斗",
+    "电脑开机，人也开机，水杯也该开工",
+    "早上好，今天争取少熬自己一点",
+    "上班第一件事：别让水杯继续当摆设",
+    "今天的任务很多，身体这条线也别掉",
+    "开工愉快，记得让眼睛和腿偶尔休息",
+    "早上好，先把水喝了，别靠意志力续命",
+    "新的一天刷新了，健康分也从今天开始攒",
+    "坐下可以，焊死不行，今天记得起来走走",
+    "早八半提醒：水杯、肩颈、腿，都要照顾",
+    "开始搬砖前，先给自己一点温水加成",
+]
 
 SIT_REMINDERS = [
     "出去拔根小烟，顺便让腿开机",
@@ -43,6 +71,29 @@ SIT_REMINDERS = [
     "出去转一圈，给今天续点状态",
     "站起来活动活动，顺便接杯水也行",
     "工位先放这儿，人出去喘口气",
+]
+
+EVENING_REMINDERS = [
+    "下班点到了，今天辛苦了，赶紧把自己还给生活",
+    "今天的工位任务结束，回家泡个温水澡放松下",
+    "可以收工了，别把班味一路带回家",
+    "下班啦，电脑关机，人也该切回生活模式",
+    "今天扛住了，晚上对自己好一点",
+    "收工时间到，肩颈和脑子都申请下线",
+    "辛苦一天了，回去洗个热水澡回血",
+    "下班提醒：工作先放下，身体先接回家",
+    "今天就到这吧，别和工位依依不舍",
+    "五点到了，可以合法撤退了",
+    "下班啦，今天的努力已经到账",
+    "工位先留这儿，人可以回去充电了",
+    "辛苦了，晚上少刷点屏，多放松一下",
+    "今天已经很可以了，回家整点舒服的",
+    "下班模式启动，建议温水澡和早点休息",
+    "到点了，别再假装自己还能高效",
+    "今天任务告一段落，身体也该结算奖励",
+    "回家路上慢点，今天已经够努力了",
+    "收工收工，别让加班偷走整个晚上",
+    "今天辛苦了，回家把自己泡软一点",
 ]
 
 WATER_REMINDERS = [
