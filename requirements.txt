@@ -1,5 +1,6 @@
 pystray
-plyer
 schedule
 pillow
 pyinstaller
+pycaw
+opencv-python
