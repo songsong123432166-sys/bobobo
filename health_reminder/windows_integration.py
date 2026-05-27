@@ -11,6 +11,13 @@ except ImportError:
     winreg = None
 
 
+class LASTINPUTINFO(ctypes.Structure):
+    _fields_ = [
+        ("cbSize", ctypes.c_uint),
+        ("dwTime", ctypes.c_uint),
+    ]
+
+
 def configure_tcl_tk_for_frozen_app():
     if not getattr(sys, "frozen", False):
         return
@@ -85,3 +92,65 @@ def start_screensaver(notify, log):
         log.write("已发送进入屏保命令")
     except Exception as exc:
         notify("屏保", f"启动屏保失败：{exc}")
+
+
+def get_idle_seconds():
+    if not sys.platform.startswith("win"):
+        return 0
+
+    last_input_info = LASTINPUTINFO()
+    last_input_info.cbSize = ctypes.sizeof(LASTINPUTINFO)
+    if not ctypes.windll.user32.GetLastInputInfo(ctypes.byref(last_input_info)):
+        return 0
+
+    tick_count = ctypes.windll.kernel32.GetTickCount()
+    return max(0, (tick_count - last_input_info.dwTime) / 1000)
+
+
+def is_media_playing():
+    try:
+        from pycaw.constants import AudioSessionState
+        from pycaw.pycaw import AudioUtilities
+    except Exception:
+        return False
+
+    video_or_meeting_processes = {
+        "zoom",
+        "zoomrooms",
+        "teams",
+        "ms-teams",
+        "tencentmeeting",
+        "wemeetapp",
+        "voovmeeting",
+        "feishu",
+        "lark",
+        "dingtalk",
+        "potplayer",
+        "potplayermini",
+        "potplayermini64",
+        "vlc",
+        "mpv",
+        "wmplayer",
+        "video.ui",
+        "mpc-hc",
+        "mpc-hc64",
+    }
+
+    try:
+        for session in AudioUtilities.GetAllSessions():
+            if session.State != AudioSessionState.Active:
+                continue
+            if session.Process is None:
+                continue
+            process_name = session.Process.name().lower().removesuffix(".exe")
+            if process_name not in video_or_meeting_processes:
+                continue
+            volume = session.SimpleAudioVolume
+            if volume is None:
+                return True
+            if not volume.GetMute() and volume.GetMasterVolume() > 0:
+                return True
+    except Exception:
+        return False
+
+    return False
