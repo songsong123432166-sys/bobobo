@@ -52,11 +52,11 @@ if errorlevel 1 (
 
 echo.
 echo Installing packages...
-%PYTHON_CMD% -m pip install pystray plyer schedule pillow pyinstaller
+%PYTHON_CMD% -m pip install pystray schedule pillow pyinstaller pycaw opencv-python
 if errorlevel 1 (
     echo.
     echo Package installation failed. Checking whether packages already exist...
-    %PYTHON_CMD% -c "import pystray, plyer, schedule, PIL, PyInstaller; print('Packages already installed.')"
+    %PYTHON_CMD% -c "import pystray, schedule, PIL, PyInstaller, pycaw, cv2; print('Packages already installed.')"
     if errorlevel 1 (
         echo.
         echo ERROR: Packages are still missing.
