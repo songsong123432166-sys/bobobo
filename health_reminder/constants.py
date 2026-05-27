@@ -4,7 +4,7 @@ from pathlib import Path
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "2.3.0"
+APP_VERSION = "2.4.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
