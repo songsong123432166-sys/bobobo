@@ -13,6 +13,29 @@ class ReminderLogicTests(unittest.TestCase):
         app.last_water_reset = datetime(2026, 5, 28, 8, 30)
         return app
 
+    def attach_fake_outputs(self, app):
+        class FakeLog:
+            def __init__(self):
+                self.entries = []
+
+            def write(self, message):
+                self.entries.append(message)
+
+        class FakeUi:
+            def __init__(self):
+                self.toasts = []
+                self.water_popups = []
+
+            def show_toast(self, title, message):
+                self.toasts.append((title, message))
+
+            def show_water_popup(self, message):
+                self.water_popups.append(message)
+
+        app.log = FakeLog()
+        app.ui = FakeUi()
+        return app
+
     def test_due_reminders_are_merged_when_next_one_is_nearby(self):
         app = self.make_app()
         app.config["sit_interval_minutes"] = 45
@@ -64,6 +87,44 @@ class ReminderLogicTests(unittest.TestCase):
             self.assertTrue(app.is_quiet_time())
         finally:
             __import__("health_reminder.app").app.datetime = original_datetime
+
+    def test_water_reminder_uses_only_confirmation_popup(self):
+        app = self.attach_fake_outputs(self.make_app())
+
+        app._show_health_reminders([
+            {
+                "kind": "water",
+                "title": "喝水提醒",
+                "message": "喝口水",
+            }
+        ])
+
+        self.assertEqual([], app.ui.toasts)
+        self.assertEqual(["喝口水"], app.ui.water_popups)
+        self.assertEqual(["喝水提醒: 喝口水"], app.log.entries)
+
+    def test_merged_water_reminder_uses_single_confirmation_popup(self):
+        app = self.attach_fake_outputs(self.make_app())
+
+        app._show_health_reminders([
+            {
+                "kind": "sit",
+                "title": "久坐提醒",
+                "message": "起来走走",
+            },
+            {
+                "kind": "water",
+                "title": "喝水提醒",
+                "message": "喝口水",
+            },
+        ])
+
+        self.assertEqual([], app.ui.toasts)
+        self.assertEqual(["久坐提醒：起来走走\n喝水提醒：喝口水"], app.ui.water_popups)
+        self.assertEqual(
+            ["健康提醒: 久坐提醒：起来走走\n喝水提醒：喝口水"],
+            app.log.entries,
+        )
 
 
 if __name__ == "__main__":
