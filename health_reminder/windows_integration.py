@@ -74,26 +74,6 @@ def set_startup(enabled, log):
         return False
 
 
-def start_screensaver(notify, log):
-    if not sys.platform.startswith("win"):
-        notify("屏保", "当前系统不支持 Windows 屏保命令")
-        return
-
-    try:
-        hwnd_broadcast = 0xFFFF
-        wm_syscommand = 0x0112
-        sc_screensave = 0xF140
-        ctypes.windll.user32.SendMessageW(
-            hwnd_broadcast,
-            wm_syscommand,
-            sc_screensave,
-            0,
-        )
-        log.write("已发送进入屏保命令")
-    except Exception as exc:
-        notify("屏保", f"启动屏保失败：{exc}")
-
-
 def get_idle_seconds():
     if not sys.platform.startswith("win"):
         return 0
