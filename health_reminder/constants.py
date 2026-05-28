@@ -24,7 +24,6 @@ DEFAULT_CONFIG = {
     "quiet_start": "12:00",
     "quiet_end": "13:00",
     "startup_enabled": True,
-    "meeting_mode": False,
     "away_after_minutes": 10,
     "idle_after_minutes": 15,
     "camera_detection_interval_minutes": 1,
@@ -122,3 +121,4 @@ WATER_REMINDERS = [
     "整两口温水，状态可能就回来了",
     "喝水小任务刷新了，点一个完成",
 ]
+

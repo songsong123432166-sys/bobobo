@@ -183,7 +183,6 @@ class UiManager:
                 self.app.handle_away_reason(k)
                 close()
             btns = [("bathroom","\U0001f6bf \u4e0a\u5395\u6240",_C["accent"]),
-                    ("meeting","\U0001f4ac \u5f00\u4f1a",_C["purple"]),
                     ("smoke","\U0001f6ac \u62bd\u6839\u70df",_C["orange"]),
                     ("fieldwork","\U0001f4bc \u5916\u52e4",_C["green"])]
             for key, label, color in btns:
@@ -293,7 +292,6 @@ class UiManager:
         card_defs = [
             ("water_count","\u559d\u6c34",_C["accent"],"\U0001f4a7"),
             ("bathroom_count","\u4e0a\u5395\u6240",_C["orange"],"\U0001f6bf"),
-            ("meeting_count","\u5f00\u4f1a",_C["purple"],"\U0001f4ac"),
             ("smoke_count","\u62bd\u6839\u70df",_C["red"],"\U0001f6ac"),
             ("fieldwork_count","\u5916\u52e4",_C["green"],"\U0001f4bc"),
             ("sit_count","\u8d77\u8eab",_C["cyan"],"\U0001f9b6")]
@@ -329,11 +327,9 @@ class UiManager:
         live = {
             "water_count": int(hs.get("water_count", 0)),
             "sit_count": int(hs.get("sit_count", 0)),
-            "meeting_minutes": int(hs.get("meeting_minutes", 0)),
             "bathroom_count": int(ar.get("bathroom_count", 0)),
             "smoke_count": int(ar.get("smoke_count", 0)),
             "fieldwork_count": int(ar.get("fieldwork_count", 0)),
-            "meeting_count": int(ar.get("meeting_count", 0)),
         }
         for key in self._stat_values:
             self._stat_values[key].configure(text=str(live.get(key, 0)))
@@ -352,7 +348,7 @@ class UiManager:
             self._score_detail.configure(text=(
                 f"\u559d\u6c34 {data['water_count']} \u6b21  \u8d77\u8eab {data['sit_count']} \u6b21\n"
                 f"\u4e45\u5750 {int(self.app.get_current_sit_minutes())} \u5206\u949f  "
-                f"\u5f00\u4f1a {data['meeting_minutes']} \u5206\u949f"))
+                f"\u4e45\u5750 {int(self.app.get_current_sit_minutes())} \u5206\u949f"))
         except Exception:
             pass
         # traffic light
@@ -371,8 +367,8 @@ class UiManager:
             label_map = {"away":"\u79bb\u5f00","idle":"\u53ef\u80fd\u79bb\u5f00","using":"\u4f7f\u7528\u4e2d"}
             self._traffic_label.configure(text=label_map.get(state, ""))
         except Exception:
-            pass
-        mode = "\u5f00\u4f1a\u6a21\u5f0f" if self.app.is_meeting_mode() else "\u6b63\u5e38"
+        mode = "\u6b63\u5e38\u63d0\u9192"
+        mode = "\u6b63\u5e38\u63d0\u9192"
         work = "\u5de5\u4f5c\u65f6\u95f4" if self.app.is_work_time() else "\u975e\u5de5\u4f5c\u65f6\u95f4"
         act = self.app.activity.label()
         self._status_labels["\u72b6\u6001"].configure(text=f"{mode} / {work} / {act}")
@@ -495,7 +491,7 @@ class UiManager:
         tk.Label(self._cal_content, text="\u6bcf\u65e5\u660e\u7ec6",
             font=("Microsoft YaHei UI", 12, "bold"), bg=_C["bg"], fg=_C["txt"]).pack(anchor="w", pady=(4, 8))
         cols = ["\u65e5\u671f","\u559d\u6c34","\u4e0a\u5395\u6240","\u5f00\u4f1a","\u62bd\u6839\u70df","\u5916\u52e4","\u8d77\u8eab"]
-        keys = ["water_count","bathroom_count","meeting_count","smoke_count","fieldwork_count","sit_count"]
+        keys = ["water_count","bathroom_count","smoke_count","fieldwork_count","sit_count"]
         header_fr = tk.Frame(self._cal_content, bg=_C["card"],
             highlightbackground=_C["border"], highlightthickness=1)
         header_fr.pack(fill="x")
@@ -545,7 +541,6 @@ class UiManager:
         self._toggle_vars = {}
         toggle_defs = [
             ("startup_enabled","\u5f00\u673a\u81ea\u542f"),
-            ("meeting_mode","\u5f00\u4f1a\u6a21\u5f0f"),
             ("quiet_enabled","\u52ff\u6270\u6a21\u5f0f"),
             ("center_popup_enabled","\u4e2d\u592e\u5f39\u7a97")]
         for i, (key, label) in enumerate(toggle_defs):
@@ -644,7 +639,6 @@ class UiManager:
             "away_after_minutes": safe_int(self._act_vars["away_after"].get(), 10, 1, 120),
             "idle_after_minutes": safe_int(self._act_vars["idle_after"].get(), 15, 1, 240),
             "startup_enabled": bool(self._toggle_vars["startup_enabled"].get()),
-            "meeting_mode": bool(self._toggle_vars["meeting_mode"].get()),
             "quiet_enabled": bool(self._toggle_vars["quiet_enabled"].get()),
             "center_popup_enabled": bool(self._toggle_vars["center_popup_enabled"].get()),
         }

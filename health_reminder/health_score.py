@@ -1,4 +1,4 @@
-import json
+﻿import json
 from datetime import date
 
 from .config_store import ensure_data_dir
@@ -19,7 +19,6 @@ class HealthScore:
             "date": self._today(),
             "water_count": 0,
             "sit_count": 0,
-            "meeting_minutes": 0,
         }
 
     def _load(self):
@@ -61,19 +60,10 @@ class HealthScore:
         score = self.calculate()["total"]
         self.log.write(f"起身完成，今日起身 {self.stats['sit_count']} 次，健康分 {score}")
         return score
-
-    def add_meeting_minutes(self, minutes):
-        self.ensure_today()
-        if minutes <= 0:
-            return
-        self.stats["meeting_minutes"] = int(self.stats.get("meeting_minutes", 0)) + int(minutes)
-        self.save()
-
     def calculate(self, current_sit_minutes=0, runtime_minutes=0):
         self.ensure_today()
         water_count = int(self.stats.get("water_count", 0))
         sit_count = int(self.stats.get("sit_count", 0))
-        meeting_minutes = int(self.stats.get("meeting_minutes", 0))
 
         water_score = min(30, water_count * 4)
         sit_score = min(30, sit_count * 5)
@@ -88,25 +78,15 @@ class HealthScore:
             rhythm_score = 0
 
         runtime_score = min(10, int(runtime_minutes / 24))
-
-        if meeting_minutes <= 120:
-            meeting_score = 10
-        elif meeting_minutes <= 240:
-            meeting_score = 6
-        else:
-            meeting_score = 3
-
-        total = water_score + sit_score + rhythm_score + runtime_score + meeting_score
+        total = water_score + sit_score + rhythm_score + runtime_score 
         return {
             "total": min(100, total),
             "water_count": water_count,
             "sit_count": sit_count,
-            "meeting_minutes": meeting_minutes,
             "water_score": water_score,
             "sit_score": sit_score,
             "rhythm_score": rhythm_score,
             "runtime_score": runtime_score,
-            "meeting_score": meeting_score,
         }
 
     def summary_text(self, current_sit_minutes=0, runtime_minutes=0):
@@ -125,5 +105,6 @@ class HealthScore:
             f"今日健康分：{total} / 100\n"
             f"{comment}\n"
             f"喝水：{score['water_count']} 次  起身：{score['sit_count']} 次\n"
-            f"连续久坐：约 {int(current_sit_minutes)} 分钟  开会模式：{score['meeting_minutes']} 分钟"
+            f"连续久坐：约 {int(current_sit_minutes)} 分钟  "
         )
+
