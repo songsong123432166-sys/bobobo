@@ -1,4 +1,6 @@
-﻿import os
+import os
+import shutil
+import tempfile
 from datetime import datetime, timedelta
 
 
@@ -6,6 +8,55 @@ _MODEL_DIR = os.path.join(os.path.dirname(__file__), "models")
 _PROTOTXT = os.path.join(_MODEL_DIR, "deploy.prototxt")
 _CAFFEMODEL = os.path.join(_MODEL_DIR, "res10_300x300_ssd_iter_140000.caffemodel")
 _CONFIDENCE_THRESHOLD = 0.6
+_ASCII_MODEL_DIRS = (
+    r"C:\HealthReminderModels",
+    os.path.join(os.environ.get("PUBLIC", r"C:\Users\Public"), "HealthReminderModels"),
+    os.path.join(os.environ.get("PROGRAMDATA", r"C:\ProgramData"), "HealthReminderModels"),
+    os.path.join(tempfile.gettempdir(), "HealthReminderModels"),
+)
+
+
+def _writable_ascii_model_dir():
+    for model_dir in _ASCII_MODEL_DIRS:
+        try:
+            model_dir.encode("ascii")
+        except UnicodeEncodeError:
+            continue
+        try:
+            os.makedirs(model_dir, exist_ok=True)
+            test_path = os.path.join(model_dir, ".write-test")
+            with open(test_path, "w", encoding="utf-8") as handle:
+                handle.write("ok")
+            os.remove(test_path)
+            return model_dir
+        except OSError:
+            continue
+    raise OSError("No writable model cache directory found")
+
+
+def _ascii_model_paths():
+    for model_dir in _ASCII_MODEL_DIRS:
+        try:
+            model_dir.encode("ascii")
+        except UnicodeEncodeError:
+            continue
+        prototxt = os.path.join(model_dir, "deploy.prototxt")
+        caffemodel = os.path.join(model_dir, "res10_300x300_ssd_iter_140000.caffemodel")
+        if (
+            os.path.isfile(prototxt)
+            and os.path.isfile(caffemodel)
+            and os.path.getsize(prototxt) == os.path.getsize(_PROTOTXT)
+            and os.path.getsize(caffemodel) == os.path.getsize(_CAFFEMODEL)
+        ):
+            return prototxt, caffemodel
+
+    model_dir = _writable_ascii_model_dir()
+    prototxt = os.path.join(model_dir, "deploy.prototxt")
+    caffemodel = os.path.join(model_dir, "res10_300x300_ssd_iter_140000.caffemodel")
+    for source, target in ((_PROTOTXT, prototxt), (_CAFFEMODEL, caffemodel)):
+        if not os.path.isfile(target) or os.path.getsize(target) != os.path.getsize(source):
+            shutil.copy2(source, target)
+    return prototxt, caffemodel
 
 
 class CameraPresenceDetector:
@@ -28,7 +79,8 @@ class CameraPresenceDetector:
             import cv2
             if not os.path.isfile(_PROTOTXT) or not os.path.isfile(_CAFFEMODEL):
                 raise FileNotFoundError("DNN model files not found")
-            self._net = cv2.dnn.readNetFromCaffe(_PROTOTXT, _CAFFEMODEL)
+            prototxt, caffemodel = _ascii_model_paths()
+            self._net = cv2.dnn.readNetFromCaffe(prototxt, caffemodel)
         return self._net
 
     def due(self):
