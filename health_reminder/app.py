@@ -192,16 +192,20 @@ class HealthReminderApp:
     def _show_health_reminders(self, reminders):
         if len(reminders) == 1:
             item = reminders[0]
-            self.notify(item["title"], item["message"])
             if item["kind"] == "water":
+                self.log.write(f"{item['title']}: {item['message']}")
                 self.ui.show_water_popup(item["message"])
+            else:
+                self.notify(item["title"], item["message"])
             return
 
         title = "健康提醒"
         message = "\n".join(f"{item['title']}：{item['message']}" for item in reminders)
-        self.notify(title, message)
         if any(item["kind"] == "water" for item in reminders):
+            self.log.write(f"{title}: {message}")
             self.ui.show_water_popup(message)
+        else:
+            self.notify(title, message)
 
     def scheduler_loop(self):
         while self.running:
