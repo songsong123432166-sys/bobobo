@@ -4,7 +4,7 @@ from pathlib import Path
 
 APP_NAME = "HealthTrayReminder"
 APP_DISPLAY_NAME = "健康提醒"
-APP_VERSION = "2.4.0"
+APP_VERSION = "2.7.0"
 APP_TITLE = f"{APP_DISPLAY_NAME} v{APP_VERSION}"
 
 DATA_DIR = Path(os.environ.get("APPDATA", Path.home())) / APP_NAME
@@ -18,9 +18,12 @@ DEFAULT_CONFIG = {
     "sit_interval_minutes": 45,
     "water_interval_minutes": 60,
     "water_snooze_minutes": 10,
+    "merge_window_minutes": 5,
+    "quiet_enabled": False,
+    "quiet_start": "12:00",
+    "quiet_end": "13:00",
     "startup_enabled": True,
     "meeting_mode": False,
-    "meeting_auto_screensaver": False,
     "away_after_minutes": 10,
     "idle_after_minutes": 15,
     "camera_detection_enabled": False,
