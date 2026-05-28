@@ -5,3 +5,6 @@ dist/
 build/
 *.spec
 camera_test*.jpg
+
+err.txt
+out.txt
