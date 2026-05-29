@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "health-tray-reminder"
+version = "2.7.7"
+description = "Windows tray health reminder for sitting, water, work status, and daily health summary."
+requires-python = ">=3.10"
+dependencies = [
+  "pillow>=10.0",
+  "pystray>=0.19",
+  "schedule>=1.2",
+]
+
+[project.optional-dependencies]
+camera = ["opencv-python>=4.8"]
+media = ["pycaw>=20240210", "comtypes>=1.2"]
+build = ["pyinstaller>=6.0"]
+test = ["pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+include = ["health_reminder*"]
+
+[tool.setuptools.package-data]
+health_reminder = ["assets/*", "models/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

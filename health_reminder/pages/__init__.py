@@ -1,1 +1,0 @@
-"""Window-level page composition."""
