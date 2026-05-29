@@ -1,4 +1,4 @@
-﻿import random
+import random
 import threading
 import time
 from datetime import datetime, timedelta
@@ -22,8 +22,14 @@ from .constants import (
 )
 from .event_log import EventLog
 from .health_score import HealthScore
+from .reminder_engine import (
+    build_reminder_candidates,
+    collect_due_reminders,
+    merge_nearby_reminders,
+)
 from .tray_icon import create_icon_image
 from .ui import UiManager
+from .utils.time_rules import is_now_in_clock_range, minutes_until
 from .windows_integration import get_idle_seconds, is_media_playing, set_startup
 
 
@@ -53,22 +59,16 @@ class HealthReminderApp:
         self.ui.show_toast(title, message)
 
     def is_work_time(self):
-        now = datetime.now().time()
         start = parse_clock(self.config["work_start"], DEFAULT_CONFIG["work_start"])
         end = parse_clock(self.config["work_end"], DEFAULT_CONFIG["work_end"])
-        if start <= end:
-            return start <= now <= end
-        return now >= start or now <= end
+        return is_now_in_clock_range(start, end, datetime.now())
 
     def is_quiet_time(self):
         if not self.config.get("quiet_enabled", False):
             return False
-        now = datetime.now().time()
         start = parse_clock(self.config.get("quiet_start"), DEFAULT_CONFIG["quiet_start"])
         end = parse_clock(self.config.get("quiet_end"), DEFAULT_CONFIG["quiet_end"])
-        if start <= end:
-            return start <= now <= end
-        return now >= start or now <= end
+        return is_now_in_clock_range(start, end, datetime.now())
 
     def can_send_health_reminders(self):
         return (
@@ -126,48 +126,25 @@ class HealthReminderApp:
         self.last_sit_reset = when
         self.last_water_reset = when
 
-    def start_screensaver(self, icon=None, item=None):
-        import subprocess
-        try:
-            subprocess.Popen(["scrnsave.scr", "/s"])
-            self.log.write("已启动屏保")
-        except Exception as exc:
-            self.log.write(f"启动屏保失败：{exc}")
-
-    # ---- reminder collection & merging ---------------------------------
-
     def _reminder_candidates(self):
-        return [
-            {
-                "kind": "sit",
-                "title": "久坐提醒",
-                "message": random.choice(SIT_REMINDERS),
-                "due_at": self.last_sit_reset
-                + timedelta(minutes=self.config["sit_interval_minutes"]),
-            },
-            {
-                "kind": "water",
-                "title": "喝水提醒",
-                "message": random.choice(WATER_REMINDERS),
-                "due_at": self.last_water_reset
-                + timedelta(minutes=self.config["water_interval_minutes"]),
-            },
-        ]
+        return build_reminder_candidates(
+            self.last_sit_reset,
+            self.last_water_reset,
+            self.config,
+            random.choice(SIT_REMINDERS),
+            random.choice(WATER_REMINDERS),
+        )
 
     def _collect_due_reminders(self, now):
-        return [item for item in self._reminder_candidates() if item["due_at"] <= now]
+        return collect_due_reminders(self._reminder_candidates(), now)
 
     def _merge_nearby_reminders(self, now, due_items):
-        merge_window = timedelta(minutes=self.config.get("merge_window_minutes", 5))
-        reminders = list(due_items)
-        kinds = {item["kind"] for item in reminders}
-        for item in self._reminder_candidates():
-            if item["kind"] in kinds:
-                continue
-            if timedelta(0) < item["due_at"] - now <= merge_window:
-                reminders.append(item)
-                kinds.add(item["kind"])
-        return reminders
+        return merge_nearby_reminders(
+            self._reminder_candidates(),
+            now,
+            due_items,
+            self.config.get("merge_window_minutes", 5),
+        )
 
     def _show_health_reminders(self, reminders):
         if len(reminders) == 1:
@@ -201,8 +178,6 @@ class HealthReminderApp:
                 elif item["kind"] == "water":
                     self.last_water_reset = now
         self._show_health_reminders(reminders)
-
-    # ---- main loop ------------------------------------------------------
 
     def scheduler_loop(self):
         while self.running:
@@ -251,27 +226,15 @@ class HealthReminderApp:
         self.notify("离席记录", f"已记录，今日第 {count} 次")
 
     def get_status_text(self):
-        mode = "\u6b63\u5e38\u63d0\u9192"
+        mode = "正常提醒"
         work = "工作时间内" if self.is_work_time() else "非工作时间"
         activity = self.activity.label()
         idle_minutes = int(self.activity.idle_minutes())
         camera = self.camera_presence.last_result
         away_info = self.away_reason.summary_text()
         with self.state_lock:
-            sit_next = max(
-                0,
-                int(
-                    self.config["sit_interval_minutes"]
-                    - (datetime.now() - self.last_sit_reset).total_seconds() / 60
-                ),
-            )
-            water_next = max(
-                0,
-                int(
-                    self.config["water_interval_minutes"]
-                    - (datetime.now() - self.last_water_reset).total_seconds() / 60
-                ),
-            )
+            sit_next = minutes_until(self.last_sit_reset, self.config["sit_interval_minutes"])
+            water_next = minutes_until(self.last_water_reset, self.config["water_interval_minutes"])
         return (
             f"状态：{mode} / {work} / 电脑{activity}\n"
             f"勿扰时间：{'开启中' if self.is_quiet_time() else '未开启'}\n"
@@ -305,7 +268,8 @@ class HealthReminderApp:
         )
         self.apply_startup_setting()
         self.setup_schedule()
-                self.notify("设置已保存", "新的提醒设置已经生效")
+        self.notify("设置已保存", "新的提醒设置已经生效")
+
     def show_about(self, icon=None, item=None):
         self.notify("关于程序", f"{APP_TITLE} 正在运行")
 
@@ -313,6 +277,7 @@ class HealthReminderApp:
         self.running = False
         self.log.write("程序退出")
         icon.stop()
+
     def run(self):
         self.log.write(f"程序启动：{APP_TITLE}")
         self.apply_startup_setting()
@@ -328,4 +293,3 @@ class HealthReminderApp:
         )
         self.tray_icon = Icon(APP_NAME, create_icon_image(), APP_TITLE, menu)
         self.tray_icon.run()
-
