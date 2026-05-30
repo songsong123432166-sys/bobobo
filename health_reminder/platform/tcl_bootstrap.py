@@ -1,9 +1,21 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
+
+
+def _enable_dpi_awareness() -> None:
+    """Enable per-monitor DPI awareness for crisp text on high-DPI displays."""
+    import ctypes
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()
+        except Exception:
+            pass
 
 def configure_tcl_tk() -> None:
     """Point tkinter at bundled Tcl/Tk folders before the first Tk import."""

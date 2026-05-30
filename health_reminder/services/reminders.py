@@ -1,3 +1,4 @@
+"""Reminder scheduling service with prostatitis-aware intervals."""
 from __future__ import annotations
 
 import queue
@@ -5,21 +6,22 @@ import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime, time as dt_time, timedelta
-from typing import Any
+from typing import Any, Callable
 
 from ..core.event_log import EventLogger
 from ..core.health_state import HealthStateStore
 from ..platform.camera import CameraPresenceDetector
 from ..platform.media import is_media_playing
+from ..platform.sound import play_ribbit
 from ..platform.windows_idle import seconds_since_last_input
 
 
 REMINDER_TITLES = {
-    "sedentary": "该起身活动一下了",
-    "water": "该喝水了",
-    "combined": "喝水 + 起身活动",
-    "work_start": "上班提醒",
-    "work_end": "下班提醒",
+    "sedentary": "\u8be5\u8d77\u8eab\u6d3b\u52a8\u4e00\u4e0b\u4e86",
+    "water": "\u8be5\u559d\u6c34\u4e86",
+    "combined": "\u559d\u6c34 + \u8d77\u8eab\u6d3b\u52a8",
+    "work_start": "\u4e0a\u73ed\u63d0\u9192",
+    "work_end": "\u4e0b\u73ed\u63d0\u9192",
 }
 
 
@@ -100,16 +102,19 @@ class ReminderDecisionEngine:
                 self.sedentary_alert_active = True
             self.last_water = now
             self.water_snooze_until = None
-            return ReminderEvent("combined", REMINDER_TITLES["combined"], "休息一下，喝口水，顺便活动肩颈。")
+            return ReminderEvent("combined", REMINDER_TITLES["combined"],
+                                 "\u4f11\u606f\u4e00\u4e0b\uff0c\u559d\u53e3\u6c34\uff0c\u987a\u4fbf\u6d3b\u52a8\u80a9\u8180\u3002")
 
         if sedentary_due:
             self.sedentary_alert_active = True
-            return ReminderEvent("sedentary", REMINDER_TITLES["sedentary"], "离开椅子走动两分钟，眼睛也休息一下。")
+            return ReminderEvent("sedentary", REMINDER_TITLES["sedentary"],
+                                 "\u79bb\u5f00\u6905\u5b50\u8d70\u52a8\u4e24\u5206\u949f\uff0c\u773c\u775b\u4e5f\u4f11\u606f\u4e00\u4e0b\u3002")
 
         if water_due:
             self.last_water = now
             self.water_snooze_until = None
-            return ReminderEvent("water", REMINDER_TITLES["water"], "补充一杯水，给今天的健康分加一点蓝色。")
+            return ReminderEvent("water", REMINDER_TITLES["water"],
+                                 "\u8865\u5145\u4e00\u676f\u6c34\uff0c\u7ed9\u4eca\u5929\u7684\u5065\u5eb7\u5206\u52a0\u4e00\u70b9\u84dd\u8272\u3002")
 
         return None
 
@@ -126,105 +131,93 @@ class ReminderDecisionEngine:
 
 
 class ReminderService:
+    TICK_SECONDS = 5
+
     def __init__(
         self,
-        config_getter,
-        ui_queue: queue.Queue,
+        get_config: Callable[[], dict[str, Any]],
+        ui_queue: queue.Queue[tuple[str, Any]],
         state: HealthStateStore,
         logger: EventLogger,
     ) -> None:
-        self.config_getter = config_getter
+        self._get_config = get_config
         self.ui_queue = ui_queue
         self.state = state
         self.logger = logger
         self.engine = ReminderDecisionEngine()
         self.camera = CameraPresenceDetector()
-        self._stop = threading.Event()
         self._thread: threading.Thread | None = None
-        self._last_work_day: str | None = None
-        self._work_start_shown = False
-        self._work_end_shown = False
-        self._last_camera_check = 0.0
-        self._camera_misses = 0
-        self._away_pending = False
+        self._stop_event = threading.Event()
+        self._paused = False
         self._presence_status = "using"
         self._away_started_mono: float | None = None
-        self._sedentary_started_mono = time.monotonic()
+        self._sedentary_started_mono: float = time.monotonic()
+        self._camera_misses = 0
+        self._last_camera_check = 0.0
         self._stand_watch_until = 0.0
         self._next_stand_watch_check = 0.0
-        self._last_tick = time.monotonic()
+        self._away_pending = False
+        self._last_work_event: str | None = None
 
     def start(self) -> None:
-        if self._thread and self._thread.is_alive():
-            return
-        self._stop.clear()
-        self._thread = threading.Thread(target=self._run, name="health-reminder-service", daemon=True)
+        self._thread = threading.Thread(target=self._run, name="reminder-service", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
-        self._stop.set()
-        if self._thread and self._thread.is_alive():
-            self._thread.join(timeout=3)
+        self._stop_event.set()
 
     def _run(self) -> None:
-        self.logger.log("service_start", "background reminder service started")
-        while not self._stop.is_set():
+        while not self._stop_event.is_set():
             try:
                 self._tick()
             except Exception as exc:
-                self.logger.log("service_error", str(exc))
-            self._stop.wait(1)
-        self.logger.log("service_stop", "background reminder service stopped")
+                self.logger.log("service_tick_error", str(exc))
+            self._stop_event.wait(self.TICK_SECONDS)
 
     def _tick(self) -> None:
-        now_mono = time.monotonic()
-        elapsed = int(now_mono - self._last_tick)
-        self._last_tick = now_mono
-        if elapsed > 0:
-            self.state.add_seconds("run_seconds", elapsed)
-            self.state.add_seconds("computer_seconds", elapsed)
-
-        config = self.config_getter()
         now = datetime.now()
-        self._check_work_reminders(now, config)
+        config = self._get_config()
+        self._check_work_events(now, config)
 
-        idle_seconds = seconds_since_last_input()
-        self._update_presence_from_input(now_mono, idle_seconds, config)
-        self._check_stand_watch(now_mono, config)
-        self._check_camera(now_mono, idle_seconds, config)
-        self._publish_presence_metrics(now_mono, config)
-
-        paused = self._presence_status != "using"
-
-        if is_media_playing():
-            self.state.set_status("检测到媒体播放，提醒降低打扰")
-
-        event = self.engine.due(now, config, paused=paused)
-        if event:
-            self.logger.log("reminder", event.kind)
-            if event.kind in {"sedentary", "combined"}:
-                self.state.increment("sedentary_alerts", 1)
-                self._start_stand_watch(now_mono, config)
+        event = self.engine.due(now, config, paused=self._paused)
+        if event is not None:
+            self.logger.log("reminder_fired", event.kind)
             self.ui_queue.put(("reminder", event))
 
-    def _check_work_reminders(self, now: datetime, config: dict[str, Any]) -> None:
-        today = now.date().isoformat()
-        if today != self._last_work_day:
-            self._last_work_day = today
-            self._work_start_shown = False
-            self._work_end_shown = False
+        idle = seconds_since_last_input()
+        now_mono = time.monotonic()
+        self._update_presence_from_input(now_mono, idle, config)
+
+        if self._stand_watch_until > 0:
+            self._check_stand_watch(now_mono, config)
+        self._check_camera(now_mono, idle, config)
+        self._publish_presence_metrics(now_mono, config)
+
+    def _check_work_events(self, now: datetime, config: dict[str, Any]) -> None:
+        work = config.get("work_time", {})
+        start_str = work.get("start", "")
+        end_str = work.get("end", "")
+        if not start_str or not end_str:
+            return
         try:
-            start = parse_clock(config.get("work_time", {}).get("start", "08:30"))
-            end = parse_clock(config.get("work_time", {}).get("end", "17:00"))
+            start_t = parse_clock(start_str)
+            end_t = parse_clock(end_str)
         except Exception:
             return
-        current = now.time().replace(second=0, microsecond=0)
-        if not self._work_start_shown and current >= start:
-            self._work_start_shown = True
-            self.ui_queue.put(("reminder", ReminderEvent("work_start", REMINDER_TITLES["work_start"], "今天也要注意补水和起身活动。")))
-        if not self._work_end_shown and current >= end:
-            self._work_end_shown = True
-            self.ui_queue.put(("reminder", ReminderEvent("work_end", REMINDER_TITLES["work_end"], "工作时间结束，记得收尾并放松一下。")))
+
+        event_kind: str | None = None
+        if is_time_between(now.time(), start_t, (datetime.combine(now.date(), start_t) + timedelta(minutes=2)).time()):
+            event_kind = "work_start"
+        elif is_time_between(now.time(), end_t, (datetime.combine(now.date(), end_t) + timedelta(minutes=2)).time()):
+            event_kind = "work_end"
+
+        if event_kind and event_kind != self._last_work_event:
+            self._last_work_event = event_kind
+            self.logger.log("work_event", event_kind)
+            self.ui_queue.put(("reminder", ReminderEvent(
+                event_kind, REMINDER_TITLES[event_kind],
+                "\u4e0a\u73ed\u65f6\u95f4\u5f00\u59cb\uff0c\u8bb0\u5f97\u6536\u5c3e\u5e76\u653e\u677e\u4e00\u4e0b\u3002" if event_kind == "work_end" else "\u5de5\u4f5c\u65f6\u95f4\u5f00\u59cb\u4e86\uff0c\u52a0\u6cb9\uff01",
+            )))
 
     def _update_presence_from_input(self, now_mono: float, idle_seconds: float, config: dict[str, Any]) -> None:
         threshold = int(config.get("detection", {}).get("camera_idle_threshold_seconds", 60))
@@ -295,7 +288,7 @@ class ReminderService:
             self._sedentary_started_mono = now_mono
             self.engine.confirm_stand()
             self.logger.log("presence_return", source)
-            self.state.set_status("电脑正在使用，久坐计时已重新开始")
+            self.state.set_status("\u7535\u8111\u6b63\u5728\u4f7f\u7528\uff0c\u4e45\u5750\u8ba1\u65f6\u5df2\u91cd\u65b0\u5f00\u59cb")
             if self._away_pending:
                 self.ui_queue.put(("away_reason", None))
                 self._away_pending = False
@@ -306,7 +299,7 @@ class ReminderService:
             self._away_started_mono = now_mono
             self._sedentary_started_mono = now_mono
             self.engine.confirm_stand()
-            self.state.set_status("检测到人不在电脑前")
+            self.state.set_status("\u68c0\u6d4b\u5230\u4eba\u4e0d\u5728\u7535\u8111\u524d")
         self._presence_status = "away"
         self._away_pending = True
 

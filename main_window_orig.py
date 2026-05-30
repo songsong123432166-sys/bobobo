@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import calendar
 import tkinter as tk
@@ -14,9 +14,7 @@ from ..core.event_log import EventLogger
 from ..core.health_state import HealthStateStore
 from ..core.paths import resource_path
 from ..platform import autostart
-from ..core.scoring import ScoreBreakdown
 
-import customtkinter as ctk
 
 BG = "#f3f4f6"
 SIDEBAR = "#ffffff"
@@ -45,76 +43,39 @@ def metric_value(data: dict[str, Any], key: str) -> int:
 
 
 class ScrollPage:
-    _BAR_W = 6
-    _BAR_COLOR = "#c5c9d0"
-    _HIDE_DELAY = 1200
-
     def __init__(self, parent: tk.Frame) -> None:
         self.canvas = tk.Canvas(parent, bg=BG, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(parent, orient="vertical", command=self.canvas.yview)
         self.frame = tk.Frame(self.canvas, bg=BG)
         self.window_id = self.canvas.create_window((0, 0), window=self.frame, anchor="nw")
-        self._bar = tk.Canvas(parent, width=self._BAR_W, bg=BG, highlightthickness=0, bd=0)
-        self._bar_visible = False
-        self._bar_hide_id = None
-        self.canvas.configure(yscrollcommand=self._on_scroll)
+
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
         self.frame.bind("<Configure>", self._update_region)
         self.canvas.bind("<Configure>", self._fit_width)
         self.canvas.bind("<Enter>", self._bind_wheel)
         self.canvas.bind("<Leave>", self._unbind_wheel)
 
     def destroy(self) -> None:
-        if self._bar_hide_id:
-            self.canvas.after_cancel(self._bar_hide_id)
         self.canvas.unbind_all("<MouseWheel>")
         self.canvas.destroy()
-        self._bar.destroy()
+        self.scrollbar.destroy()
 
-    def _update_region(self, _event):
+    def _update_region(self, _event: tk.Event) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-    def _fit_width(self, event):
+    def _fit_width(self, event: tk.Event) -> None:
         self.canvas.itemconfigure(self.window_id, width=event.width)
 
-    def _bind_wheel(self, _event):
+    def _bind_wheel(self, _event: tk.Event) -> None:
         self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
-    def _unbind_wheel(self, _event):
+    def _unbind_wheel(self, _event: tk.Event) -> None:
         self.canvas.unbind_all("<MouseWheel>")
 
-    def _on_mousewheel(self, event):
+    def _on_mousewheel(self, event: tk.Event) -> None:
         self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-
-    def _on_scroll(self, first, last):
-        f, l = float(first), float(last)
-        if f <= 0.0 and l >= 1.0:
-            self._hide_bar()
-            return
-        self._show_bar(f, l)
-        self._schedule_hide()
-
-    def _show_bar(self, f, l):
-        bar = self._bar
-        bar.update_idletasks()
-        h = bar.winfo_height()
-        if h < 20:
-            return
-        y1, y2 = int(f * h), max(int(l * h), int(f * h) + 24)
-        bar.delete("all")
-        if not self._bar_visible:
-            bar.place(relx=1.0, rely=0, relheight=1.0, anchor="ne", x=-2)
-            self._bar_visible = True
-        bar.create_rectangle(2, y1, self._BAR_W + 2, y2, fill=self._BAR_COLOR, outline="")
-
-    def _hide_bar(self):
-        if self._bar_visible:
-            self._bar.place_forget()
-            self._bar_visible = False
-
-    def _schedule_hide(self):
-        if self._bar_hide_id:
-            self.canvas.after_cancel(self._bar_hide_id)
-        self._bar_hide_id = self.canvas.after(self._HIDE_DELAY, self._hide_bar)
 
 
 class MainWindow:
@@ -141,11 +102,12 @@ class MainWindow:
         self._refresh_after: str | None = None
         self._window_icon: ImageTk.PhotoImage | None = None
         self._sidebar_icon: ImageTk.PhotoImage | None = None
+        self._score_image: ImageTk.PhotoImage | None = None
         self._visual_labels: dict[str, tk.Label] = {}
         self._visual_canvases: dict[str, tk.Canvas] = {}
+        self._log_frame: tk.Frame | None = None
         self._selected_day = datetime.now().date().isoformat()
         self._history_mode = "chart"
-        self._nav_buttons: dict = {}
 
     def show(self) -> None:
         if self.window and self.window.winfo_exists():
@@ -244,6 +206,7 @@ class MainWindow:
         self._cancel_refresh()
         self._visual_labels = {}
         self._visual_canvases = {}
+        self._log_frame = None
         self.setting_vars = {}
         if self.scroll_page is not None:
             self.scroll_page.destroy()
@@ -284,20 +247,25 @@ class MainWindow:
         tk.Label(frame, text=subtitle, bg=BG, fg=MUTED, font=("Microsoft YaHei UI", 10)).pack(anchor="w", pady=(4, 0))
 
     def _card(self, parent: tk.Misc, title: str | None = None) -> tk.Frame:
-        frame = ctk.CTkFrame(parent, corner_radius=16, fg_color="white", border_width=1, border_color="#e0e3e8")
+        frame = tk.Frame(parent, bg="white", highlightbackground=LINE, highlightthickness=1)
         if title:
-            ctk.CTkLabel(frame, text=title, text_color=TEXT, font=("Microsoft YaHei UI", 14, "bold")).pack(anchor="w", padx=18, pady=(16, 8))
+            tk.Label(frame, text=title, bg="white", fg=TEXT, font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w", padx=18, pady=(16, 8))
         return frame
 
     def _build_visual(self, parent: tk.Frame) -> None:
         self._header(parent, "今日健康摘要", "久坐、喝水、离席和电脑使用状态都在这里。")
 
-        score_card = self._card(parent)
-        score_card.pack(fill="x", padx=28)
+        top = tk.Frame(parent, bg=BG)
+        top.pack(fill="x", padx=28)
+        score_card = self._card(top)
+        score_card.pack(side="left", fill="both", expand=True, padx=(0, 14))
         self._score_ring(score_card)
 
-        status_card = self._card(parent, "当前状态")
-        status_card.pack(fill="x", padx=28, pady=(14, 0))
+        side = tk.Frame(top, bg=BG)
+        side.pack(side="left", fill="both", expand=True)
+
+        status_card = self._card(side, "当前状态")
+        status_card.pack(fill="x")
         self._status_lights(status_card)
         self._metric_line(status_card, "当前久坐时长", "sedentary_seconds", RED)
         self._metric_line(status_card, "久坐剩余时间", "sedentary_left", GREEN)
@@ -305,23 +273,50 @@ class MainWindow:
         self._metric_line(status_card, "电脑使用时长", "computer_seconds", RED)
         self._daily_metrics(status_card)
 
-        today_card = self._card(parent, "今日状态")
-        today_card.pack(fill="x", padx=28, pady=(14, 24))
+        today_card = self._card(side, "今日状态")
+        today_card.pack(fill="both", expand=True, pady=(14, 0))
         self._today_status(today_card)
 
+        log_card = self._card(parent, "最近事件 / 运行状态")
+        log_card.pack(fill="both", expand=True, padx=28, pady=(16, 24))
+        self._log_frame = tk.Frame(log_card, bg="white")
+        self._log_frame.pack(fill="both", expand=True, padx=18, pady=(0, 14))
         self._update_visual_values()
 
     def _score_ring(self, parent: tk.Frame) -> None:
+        canvas = tk.Canvas(parent, width=260, height=230, bg="white", highlightthickness=0)
+        canvas.pack(anchor="center", expand=True, padx=28, pady=22)
+        canvas.create_image(130, 110, image=None, tags=("score_image",))
+        canvas.create_text(130, 98, text="", fill=TEXT, font=("Microsoft YaHei UI", 36, "bold"), tags=("score_text",))
+        canvas.create_text(130, 138, text="健康分", fill=MUTED, font=("Microsoft YaHei UI", 11))
+        self._visual_canvases["score"] = canvas
+
+    def _today_status(self, parent: tk.Frame) -> None:
         body = tk.Frame(parent, bg="white")
-        body.pack(fill="x", padx=28, pady=(20, 16))
-        self._score_num_label = tk.Label(body, text="--", bg="white", fg=TEXT,
-                                          font=("Microsoft YaHei UI", 52, "bold"))
-        self._score_num_label.pack(anchor="center")
-        tk.Label(body, text="健康分", bg="white", fg=MUTED,
-                 font=("Microsoft YaHei UI", 13)).pack(anchor="center", pady=(2, 0))
-        self._grade_text_label = tk.Label(body, text="", bg="white", fg=MUTED,
-                                           font=("Microsoft YaHei UI", 10))
-        self._grade_text_label.pack(anchor="center", pady=(4, 0))
+        body.pack(fill="both", expand=True, padx=18, pady=(0, 14))
+        status = tk.Label(body, text="", bg="white", fg=MUTED, font=("Microsoft YaHei UI", 10), wraplength=320, justify="left")
+        status.pack(anchor="w", pady=(8, 18))
+        self._visual_labels["last_status"] = status
+        self._metric_line(body, "运行时长", "run_seconds", BLUE)
+        self._metric_line(body, "统计日期", "date", GREEN)
+
+    def _daily_metrics(self, parent: tk.Frame) -> None:
+        box = tk.Frame(parent, bg="white")
+        box.pack(fill="x", padx=18, pady=(12, 14))
+        metrics = [
+            ("今日喝水", "water_count", BLUE),
+            ("今日起身", "stand_count", GREEN),
+            ("今日离席", "away_count", YELLOW),
+            ("久坐提醒", "sedentary_alerts", RED),
+        ]
+        for index, (label, key, color) in enumerate(metrics):
+            item = tk.Frame(box, bg="#f9fafb", highlightthickness=1, highlightbackground="#eef0f3")
+            item.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 8, 0))
+            tk.Label(item, text=label, bg="#f9fafb", fg=MUTED, font=("Microsoft YaHei UI", 8)).pack(anchor="w", padx=10, pady=(8, 2))
+            value = tk.Label(item, text="", bg="#f9fafb", fg=color, font=("Microsoft YaHei UI", 13, "bold"))
+            value.pack(anchor="w", padx=10, pady=(0, 8))
+            self._visual_labels[key] = value
+            box.columnconfigure(index, weight=1)
 
     def _status_lights(self, parent: tk.Frame) -> None:
         lights = tk.Frame(parent, bg="white")
@@ -339,7 +334,6 @@ class MainWindow:
             self._visual_canvases[key] = canvas
             tk.Label(item, text=label, bg="white", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(side="left", padx=(5, 0))
 
-
     def _metric_line(self, parent: tk.Frame, label: str, key: str, color: str) -> None:
         row = tk.Frame(parent, bg="white")
         row.pack(fill="x", padx=18, pady=5)
@@ -348,21 +342,8 @@ class MainWindow:
         value.pack(side="right")
         self._visual_labels[key] = value
 
-
-    def _today_status(self, parent: tk.Frame) -> None:
-        body = tk.Frame(parent, bg="white")
-        body.pack(fill="both", expand=True, padx=18, pady=(0, 14))
-        status = tk.Label(body, text="", bg="white", fg=MUTED, font=("Microsoft YaHei UI", 10), wraplength=320, justify="left")
-        status.pack(anchor="w", pady=(8, 18))
-        self._visual_labels["last_status"] = status
-        self._metric_line(body, "运行时长", "run_seconds", BLUE)
-        self._metric_line(body, "统计日期", "date", GREEN)
-
-
-
     def _update_visual_values(self) -> None:
         stats = self.state.today()
-        bd = stats.score_breakdown
         sedentary_left, water_left = self.get_remaining()
         values = {
             "water_count": f"{stats.water_count} 次",
@@ -380,44 +361,75 @@ class MainWindow:
         for key, value in values.items():
             if key in self._visual_labels:
                 self._visual_labels[key].configure(text=value)
-        self._pending_breakdown = bd
         self._draw_score(stats.health_score)
         self._set_light("light_using", GREEN, stats.presence_status == "using")
         self._set_light("light_away_short", YELLOW, stats.presence_status == "away_short")
         self._set_light("light_away_long", RED, stats.presence_status == "away_long")
+        self._update_log_lines()
 
     def _draw_score(self, score: int) -> None:
+        canvas = self._visual_canvases.get("score")
+        if canvas is None:
+            return
         color = GREEN if score >= 80 else YELLOW if score >= 60 else RED
-        if hasattr(self, "_score_num_label"):
-            self._score_num_label.configure(text=str(score), fg=color)
-        bd = getattr(self, "_pending_breakdown", None)
-        if hasattr(self, "_grade_text_label") and bd:
-            self._grade_text_label.configure(text=f"{bd.grade} {bd.label}")
+        self._score_image = self._ring_image(score, color)
+        canvas.itemconfigure("score_image", image=self._score_image)
+        canvas.itemconfigure("score_text", text=str(score))
+
+    def _ring_image(self, score: int, color: str) -> ImageTk.PhotoImage:
+        scale = 4
+        size = 190
+        width = 20
+        image = Image.new("RGBA", (size * scale, size * scale), (255, 255, 255, 0))
+        draw = ImageDraw.Draw(image)
+        center = (size * scale / 2, size * scale / 2)
+        radius = (size - width - 14) * scale / 2
+        stroke = width * scale
+        bbox = [
+            center[0] - radius,
+            center[1] - radius,
+            center[0] + radius,
+            center[1] + radius,
+        ]
+        draw.arc(bbox, 0, 360, fill="#edf0f4", width=stroke)
+        extent = int(360 * max(0, min(score, 100)) / 100)
+        if extent > 0:
+            draw.arc(bbox, -90, -90 + extent, fill=color, width=stroke)
+            self._draw_arc_cap(draw, center, radius, -90, color, stroke)
+            self._draw_arc_cap(draw, center, radius, -90 + extent, color, stroke)
+        image = image.resize((size, size), Image.Resampling.LANCZOS)
+        return ImageTk.PhotoImage(image)
+
+    def _draw_arc_cap(
+        self,
+        draw: ImageDraw.ImageDraw,
+        center: tuple[float, float],
+        radius: float,
+        angle: float,
+        color: str,
+        width: int,
+    ) -> None:
+        import math
+
+        radians = math.radians(angle)
+        x = center[0] + radius * math.cos(radians)
+        y = center[1] + radius * math.sin(radians)
+        half = width / 2
+        draw.ellipse([x - half, y - half, x + half, y + half], fill=color)
 
     def _set_light(self, key: str, color: str, active: bool) -> None:
         canvas = self._visual_canvases.get(key)
         if canvas is not None:
             canvas.itemconfigure("dot", fill=color if active else "#d1d5db")
 
-    def _daily_metrics(self, parent: tk.Frame) -> None:
-        box = tk.Frame(parent, bg="white")
-        box.pack(fill="x", padx=18, pady=(12, 14))
-        metrics = [
-            ("今日喝水", "water_count", BLUE),
-            ("今日起身", "stand_count", GREEN),
-            ("今日离席", "away_count", YELLOW),
-            ("久坐提醒", "sedentary_alerts", RED),
-        ]
-        for index, (label, key, color) in enumerate(metrics):
-            item = tk.Frame(box, bg="#f9fafb", highlightbackground="#dfe4ea", highlightthickness=1)
-            item.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 8, 0), pady=0)
-            tk.Label(item, text=label, bg="#f9fafb", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(anchor="w", padx=10, pady=(8, 2))
-            value = tk.Label(item, text="", bg="#f9fafb", fg=color, font=("Microsoft YaHei UI", 14, "bold"))
-            value.pack(anchor="w", padx=10, pady=(0, 8))
-            self._visual_labels[key] = value
-            box.columnconfigure(index, weight=1)
-
-
+    def _update_log_lines(self) -> None:
+        if self._log_frame is None:
+            return
+        for child in self._log_frame.winfo_children():
+            child.destroy()
+        lines = self.logger.tail(8) or ["暂无日志"]
+        for line in lines:
+            tk.Label(self._log_frame, text=line, bg="white", fg="#4b5563", anchor="w", font=("Consolas", 9)).pack(fill="x", pady=2)
 
     def _build_calendar(self, parent: tk.Frame) -> None:
         self._header(parent, "记录日历", "查看每天喝水、起身、离席和电脑使用时长。")

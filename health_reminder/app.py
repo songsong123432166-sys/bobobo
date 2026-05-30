@@ -1,3 +1,4 @@
+﻿"""Application controller wiring UI, services, and platform components."""
 from __future__ import annotations
 
 import queue
@@ -9,6 +10,7 @@ from .platform.tcl_bootstrap import configure_tcl_tk
 
 configure_tcl_tk()
 
+import customtkinter as ctk
 import tkinter as tk
 from tkinter import messagebox, ttk
 
@@ -17,6 +19,7 @@ from .core.config import ConfigStore
 from .core.event_log import EventLogger
 from .core.health_state import HealthStateStore
 from .core.paths import get_data_paths
+from .platform.sound import play_ribbit
 from .platform.tray import TrayController
 from .services.reminders import ReminderEvent, ReminderService
 from .ui.main_window import MainWindow
@@ -32,9 +35,11 @@ class AppController:
         self.state = HealthStateStore(self.paths.health_score, self.paths.away_reason)
         self.ui_queue: queue.Queue[tuple[str, Any]] = queue.Queue()
         self._stopping = False
-        self.root = tk.Tk()
+        ctk.set_appearance_mode("light")
+        ctk.set_default_color_theme("blue")
+        self.root = ctk.CTk()
         self.root.withdraw()
-        self.root.title("健康提醒")
+        self.root.title("\u5065\u5eb7\u63d0\u9192")
         self.root.report_callback_exception = self._handle_tk_error
         self._apply_style()
 
@@ -112,7 +117,10 @@ class AppController:
             self.main_window.show()
             return
         if kind == "about":
-            messagebox.showinfo("关于程序", f"健康提醒\n{__version__}\n\n一个后台运行的健康提醒托盘程序。")
+            messagebox.showinfo(
+                "\u5173\u4e8e\u7a0b\u5e8f",
+                f"\u5065\u5eb7\u63d0\u9192\n{__version__}\n\n\u4e00\u4e2a\u540e\u53f0\u8fd0\u884c\u7684\u5065\u5eb7\u63d0\u9192\u6258\u76d8\u7a0b\u5e8f\u3002"
+            )
             return
         if kind == "quit":
             self.stop()
@@ -130,10 +138,10 @@ class AppController:
             on_snooze=self._snooze_water,
         )
 
-    def _confirm_water(self) -> None:
-        self.state.increment("water_count", 1)
+    def _confirm_water(self, ml: int = 250) -> None:
+        self.state.record_water_ml(ml)
         self.service.engine.confirm_water()
-        self.logger.log("water_confirmed", "user clicked drank")
+        self.logger.log("water_confirmed", f"{ml}ml recorded")
 
     def _snooze_water(self) -> None:
         minutes = int(self.config.get("reminders", {}).get("water_snooze_minutes", 10))
@@ -141,7 +149,7 @@ class AppController:
         self.logger.log("water_snoozed", f"{minutes} minutes")
 
     def _record_away_reason(self, reason: str) -> None:
-        if reason != "未记录":
+        if reason != "\u672a\u8bb0\u5f55":
             self.state.record_away_reason(reason)
             self.logger.log("away_reason", reason)
         else:
