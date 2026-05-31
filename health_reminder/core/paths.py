@@ -19,22 +19,27 @@ class DataPaths:
 
     @property
     def config(self) -> Path:
+        """配置文件路径。"""
         return self.root / "config.json"
 
     @property
     def log(self) -> Path:
+        """运行日志文件路径。"""
         return self.root / "run.log"
 
     @property
     def health_score(self) -> Path:
+        """健康评分数据文件路径。"""
         return self.root / "health_score.json"
 
     @property
     def away_reason(self) -> Path:
+        """离席原因记录文件路径。"""
         return self.root / "away_reason.json"
 
 
 def resource_path(relative: str) -> Path:
+    """获取打包资源的绝对路径。"""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     return base / relative
 
@@ -51,6 +56,7 @@ def _try_make(path: Path) -> tuple[bool, str | None]:
 
 
 def get_data_paths() -> DataPaths:
+    """获取数据目录路径。"""
     candidates: list[Path] = []
     appdata = os.environ.get("APPDATA")
     if appdata:

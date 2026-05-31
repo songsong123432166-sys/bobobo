@@ -63,5 +63,5 @@ def _add_dll_dir(path: Path) -> None:
         return
     try:
         os.add_dll_directory(str(path))
-    except Exception:
+    except (tk.TclError, AttributeError):
         pass

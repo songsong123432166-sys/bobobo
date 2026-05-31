@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 
 
 def create_tray_icon(size: int = 64) -> Image.Image:
+    """创建系统托盘图标。"""
     image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
     draw = ImageDraw.Draw(image)
     margin = int(size * 0.08)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 def is_media_playing() -> bool:
+    """检测是否有媒体正在播放。"""
     try:
         from ctypes import POINTER, cast
 

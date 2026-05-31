@@ -72,6 +72,7 @@ class ConfigStore:
         return write_json(self.paths.config, merged)
 
     def update(self, dotted_key: str, value: Any) -> dict[str, Any]:
+        """更新配置中的指定字段。"""
         config = self.load()
         cursor = config
         keys = dotted_key.split(".")

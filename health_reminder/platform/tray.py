@@ -53,5 +53,5 @@ class TrayController:
         try:
             if self._icon is not None:
                 self._icon.stop()
-        except Exception:
+        except (OSError, ValueError):
             pass

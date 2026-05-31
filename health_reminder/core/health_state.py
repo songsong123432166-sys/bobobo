@@ -21,7 +21,7 @@ DEFAULT_DAY: dict[str, Any] = {
     "computer_seconds": 0,
     "run_seconds": 0,
     "presence_status": "using",
-    "last_status": "\u8fd0\u884c\u4e2d",
+    "last_status": "运行中",
     "last_update": "",
     # New scoring fields
     "water_ml": 0,
@@ -158,12 +158,12 @@ class HealthStateStore:
         with self._lock:
             self.increment("away_count", 1)
             # Auto-map away reasons to scoring
-            if "\u4e0a\u5395\u6240" in reason:  # contains toilet
+            if "上厕所" in reason:  # contains toilet
                 data = self._load()
                 day = self._day(data)
                 day["toilet_count"] = int(day.get("toilet_count", 0)) + 1
                 self._save(data)
-            elif "\u62bd\u70df" in reason or "\u62bd\u6839" in reason:  # contains smoke
+            elif "抽烟" in reason or "抽根" in reason:  # contains smoke
                 data = self._load()
                 day = self._day(data)
                 day["smoke_count"] = int(day.get("smoke_count", 0)) + 1
@@ -194,7 +194,7 @@ class HealthStateStore:
                 run_seconds=int(day.get("run_seconds", 0)),
                 health_score=breakdown.total,
                 presence_status=str(day.get("presence_status", "using")),
-                last_status=str(day.get("last_status", "\u8fd0\u884c\u4e2d")),
+                last_status=str(day.get("last_status", "运行中")),
                 water_ml=int(day.get("water_ml", 0)),
                 toilet_count=int(day.get("toilet_count", 0)),
                 smoke_count=int(day.get("smoke_count", 0)),

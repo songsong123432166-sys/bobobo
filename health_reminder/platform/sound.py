@@ -44,7 +44,7 @@ def _play_sync(volume_percent: int) -> None:
 
         sound_path = _volume_adjusted_wav(_RIBBIT_PATH, volume_percent)
         winsound.PlaySound(str(sound_path), winsound.SND_FILENAME | winsound.SND_ASYNC)
-    except Exception:
+    except (OSError, RuntimeError):
         pass
 
 

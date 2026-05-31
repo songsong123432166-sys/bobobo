@@ -117,6 +117,7 @@ class CameraPresenceDetector:
         return None
 
     def check(self) -> CameraResult:
+        """执行一次摄像头检测，返回是否有人。"""
         if self._cv2 is None or (self._yunet is None and not self._cascades and self._hog is None):
             return CameraResult(False, None, f"OpenCV unavailable: {self._load_error or 'not installed'}")
 
@@ -150,14 +151,14 @@ class CameraPresenceDetector:
             try:
                 if cap:
                     cap.release()
-            except Exception:
+            except (OSError, RuntimeError):
                 pass
 
     def _prepare_capture(self, cap) -> None:
         try:
             cap.set(self._cv2.CAP_PROP_FRAME_WIDTH, self.max_width)
             cap.set(self._cv2.CAP_PROP_FRAME_HEIGHT, 480)
-        except Exception:
+        except (OSError, RuntimeError):
             pass
 
     def _resize_frame(self, frame):

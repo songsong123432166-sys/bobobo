@@ -22,6 +22,7 @@ class ScoreBreakdown:
     smoke: int
 
     def as_dict(self) -> dict[str, Any]:
+        """将评分结果转为字典。"""
         return {
             "total": self.total,
             "grade": self.grade,
@@ -34,6 +35,7 @@ class ScoreBreakdown:
         }
 
     def weakest_dimension(self) -> tuple[str, int]:
+        """返回最低分维度。"""
         items = [
             ("喝水", self.water),
             ("起身", self.stand),
@@ -44,6 +46,7 @@ class ScoreBreakdown:
         return min(items, key=lambda item: item[1])
 
     def insight(self) -> str:
+        """返回健康建议。"""
         name, _score = self.weakest_dimension()
         tips = {
             "喝水": "今天主要可以从补充喝水量开始改善。",
@@ -64,11 +67,11 @@ W_SMOKE = 10
 
 # Grade thresholds
 _GRADES = [
-    (90, "A", "\u524d\u5217\u817a\u53cb\u597d\u65e5"),
-    (75, "B", "\u4e0d\u9519\uff0c\u6709\u6539\u5584\u7a7a\u95f4"),
-    (60, "C", "\u6ce8\u610f\uff01\u6709\u98ce\u9669\u884c\u4e3a"),
-    (40, "D", "\u4eca\u5929\u4f24\u5bb3\u4e86\u4e0d\u5c11\uff0c\u660e\u5929\u8c03\u6574"),
-    (0,  "E", "\u9ad8\u5371\u65e5\uff0c\u5efa\u8bae\u590d\u76d8\u5177\u4f53\u539f\u56e0"),
+    (90, "A", "前列腺友好日"),
+    (75, "B", "不错，有改善空间"),
+    (60, "C", "注意！有风险行为"),
+    (40, "D", "今天伤害了不少，明天调整"),
+    (0,  "E", "高危日，建议复盘具体原因"),
 ]
 
 
@@ -152,6 +155,7 @@ def _grade(total: int) -> tuple[str, str]:
 
 
 def calculate_score(day: dict[str, Any]) -> ScoreBreakdown:
+    """计算五维健康评分。"""
     water_ml = int(day.get("water_ml", 0))
     stand_count = int(day.get("stand_count", 0))
     toilet_count = int(day.get("toilet_count", 0))

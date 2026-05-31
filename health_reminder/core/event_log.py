@@ -25,7 +25,7 @@ class EventLogger:
                     self.path.replace(self.path.with_suffix(".log.1"))
                 with self.path.open("a", encoding="utf-8") as handle:
                     handle.write(line + "\n")
-        except Exception:
+        except (OSError, IOError):
             pass
 
     def tail(self, count: int = 20) -> list[str]:
