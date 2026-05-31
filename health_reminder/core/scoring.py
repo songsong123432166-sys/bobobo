@@ -32,6 +32,27 @@ class ScoreBreakdown:
             "smoke": self.smoke,
         }
 
+    def weakest_dimension(self) -> tuple[str, int]:
+        items = [
+            ("喝水", self.water),
+            ("起身", self.stand),
+            ("如厕", self.toilet),
+            ("久坐", self.sit_streak),
+            ("抽烟", self.smoke),
+        ]
+        return min(items, key=lambda item: item[1])
+
+    def insight(self) -> str:
+        name, _score = self.weakest_dimension()
+        tips = {
+            "喝水": "今天主要可以从补充喝水量开始改善。",
+            "起身": "今天起身活动偏少，适合多离开座位走动。",
+            "如厕": "今天如厕节奏不够理想，可以留意憋尿或过频情况。",
+            "久坐": "今天连续久坐时间偏长，建议缩短单次坐着的时间。",
+            "抽烟": "今天抽烟记录影响健康分，减少一次就会更友好。",
+        }
+        return tips.get(name, "保持现在的节奏，继续观察今日状态。")
+
 
 # Weights (sum = 100)
 W_WATER = 25

@@ -330,6 +330,9 @@ class MainWindow:
         self._grade_text_label = tk.Label(body, text="", bg="white", fg=MUTED,
                                            font=("Microsoft YaHei UI", 10))
         self._grade_text_label.pack(anchor="center", pady=(4, 0))
+        self._score_tip_label = tk.Label(body, text="", bg="white", fg=MUTED,
+                                         font=("Microsoft YaHei UI", 10), wraplength=520, justify="center")
+        self._score_tip_label.pack(anchor="center", pady=(6, 0))
 
     def _status_lights(self, parent: tk.Frame) -> None:
         lights = tk.Frame(parent, bg="white")
@@ -401,11 +404,23 @@ class MainWindow:
         bd = getattr(self, "_pending_breakdown", None)
         if hasattr(self, "_grade_text_label") and bd:
             self._grade_text_label.configure(text=f"{bd.grade} {bd.label}")
+        if hasattr(self, "_score_tip_label") and bd:
+            self._score_tip_label.configure(text=bd.insight())
 
     def _set_light(self, key: str, color: str, active: bool) -> None:
         canvas = self._visual_canvases.get(key)
         if canvas is not None:
             canvas.itemconfigure("dot", fill=color if active else "#d1d5db")
+
+    def _weekly_summary(self) -> str:
+        history = self.state.history()
+        days = sorted(history.items(), reverse=True)[:7]
+        if not days:
+            return "暂无历史数据"
+        avg_water = sum(metric_value(data, "water_count") for _day, data in days) / len(days)
+        avg_stand = sum(metric_value(data, "stand_count") for _day, data in days) / len(days)
+        max_sit = max(metric_value(data, "max_sit_streak_minutes") for _day, data in days)
+        return f"近7天 日均喝水{avg_water:.1f}次，起身{avg_stand:.1f}次，最长久坐{max_sit}分钟"
 
     def _daily_metrics(self, parent: tk.Frame) -> None:
         box = tk.Frame(parent, bg="white")
@@ -437,9 +452,26 @@ class MainWindow:
         detail_card.pack(fill="x", padx=28, pady=(0, 14))
         self._selected_day_detail(detail_card)
 
+        week_card = self._card(parent, "本周总结")
+        week_card.pack(fill="x", padx=28, pady=(0, 14))
+        self._weekly_summary_card(week_card)
+
         history_card = self._card(parent)
         history_card.pack(fill="both", expand=True, padx=28, pady=(0, 24))
         self._history_switcher(history_card)
+
+    def _weekly_summary_card(self, parent: tk.Frame) -> None:
+        body = tk.Frame(parent, bg="white")
+        body.pack(fill="x", padx=18, pady=(0, 16))
+        tk.Label(
+            body,
+            text=self._weekly_summary(),
+            bg="white",
+            fg=TEXT,
+            font=("Microsoft YaHei UI", 11, "bold"),
+            wraplength=720,
+            justify="left",
+        ).pack(anchor="w")
 
     def _month_calendar(self, parent: tk.Frame) -> None:
         now = datetime.now()
@@ -592,6 +624,7 @@ class MainWindow:
                 ("中央弹窗", "detection.center_popup_enabled", config["detection"]["center_popup_enabled"]),
             ],
         )
+        self._privacy_note(wrap)
         self._settings_group(
             wrap,
             "今日目标",
@@ -609,6 +642,7 @@ class MainWindow:
                 ("提示音音量（0-100）", "system.sound_volume_percent", config["system"]["sound_volume_percent"]),
             ],
         )
+        self._preset_tools(wrap)
         self._test_tools(wrap)
         ttk.Button(wrap, text="保存设置", command=self._save_settings).pack(anchor="e", pady=(0, 18), padx=2)
         self._settings_log(wrap)
@@ -627,6 +661,60 @@ class MainWindow:
                 var = tk.StringVar(value=str(value))
                 ttk.Entry(row, textvariable=var, width=18).pack(side="right")
             self.setting_vars[key] = var
+
+    def _privacy_note(self, parent: tk.Frame) -> None:
+        card = self._card(parent, "隐私说明")
+        card.pack(fill="x", pady=(0, 14))
+        tk.Label(
+            card,
+            text="摄像头只在键鼠空闲后短暂检测是否有人，不保存画面，也不会上传画面。开启隐私模式后，程序不会调用摄像头。",
+            bg="white",
+            fg=MUTED,
+            font=("Microsoft YaHei UI", 10),
+            wraplength=720,
+            justify="left",
+        ).pack(fill="x", padx=18, pady=(0, 16))
+
+    def _preset_tools(self, parent: tk.Frame) -> None:
+        card = self._card(parent, "模式预设")
+        card.pack(fill="x", pady=(0, 14))
+        row = tk.Frame(card, bg="white")
+        row.pack(fill="x", padx=18, pady=(0, 16))
+        presets = [
+            ("推荐模式", {
+                "reminders.sedentary_interval_minutes": "45",
+                "reminders.water_interval_minutes": "60",
+                "detection.camera_enabled": True,
+                "detection.privacy_mode": False,
+                "detection.camera_idle_threshold_seconds": "20",
+                "detection.camera_interval_seconds": "15",
+                "detection.camera_away_interval_seconds": "60",
+                "detection.center_popup_enabled": True,
+            }),
+            ("轻量模式", {
+                "reminders.sedentary_interval_minutes": "60",
+                "reminders.water_interval_minutes": "90",
+                "detection.camera_enabled": False,
+                "detection.privacy_mode": True,
+                "detection.camera_idle_threshold_seconds": "60",
+                "detection.camera_interval_seconds": "60",
+                "detection.center_popup_enabled": False,
+            }),
+            ("隐私模式", {
+                "detection.camera_enabled": False,
+                "detection.privacy_mode": True,
+                "detection.center_popup_enabled": False,
+            }),
+        ]
+        for text, values in presets:
+            ttk.Button(row, text=text, command=lambda item=values: self._apply_preset(item)).pack(side="left", padx=(0, 8))
+
+    def _apply_preset(self, values: dict[str, Any]) -> None:
+        for key, value in values.items():
+            var = self.setting_vars.get(key)
+            if var is not None:
+                var.set(value)
+        messagebox.showinfo("模式已套用", "预设已填入，点击保存设置后生效。")
 
     def _test_tools(self, parent: tk.Frame) -> None:
         card = self._card(parent, "测试工具")

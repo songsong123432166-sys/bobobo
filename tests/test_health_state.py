@@ -31,6 +31,20 @@ class HealthStateTest(unittest.TestCase):
         self.assertEqual(best.total, 100)
         self.assertEqual(worst.total, 3)
 
+    def test_score_insight_points_to_weakest_dimension(self):
+        score = calculate_score(
+            {
+                "water_ml": 0,
+                "stand_count": 8,
+                "toilet_count": 6,
+                "toilet_max_gap_hours": 2,
+                "max_sit_streak_minutes": 30,
+                "smoke_count": 0,
+            }
+        )
+        self.assertEqual(score.weakest_dimension()[0], "喝水")
+        self.assertIn("喝水", score.insight())
+
     def test_increment_today(self):
         with TemporaryDirectory() as temp:
             store = HealthStateStore(Path(temp) / "health_score.json", Path(temp) / "away_reason.json")

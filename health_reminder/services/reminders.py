@@ -269,6 +269,7 @@ class ReminderService:
             self.engine.confirm_stand()
             self._stand_watch_until = 0.0
             self._mark_absent(now_mono, "stand_confirmed")
+            self.state.set_status("已记录一次起身，久坐计时已重置。")
             self.logger.log("stand_confirmed_by_camera", "person left after reminder")
 
     def _check_camera(self, now_mono: float, idle_seconds: float, config: dict[str, Any]) -> None:

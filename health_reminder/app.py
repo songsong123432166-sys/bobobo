@@ -161,6 +161,8 @@ class AppController:
     def _confirm_water(self, ml: int = 250) -> None:
         self.state.record_water_ml(ml)
         self.service.engine.confirm_water()
+        today = self.state.today()
+        self.state.set_status(f"已记录喝水 {ml}ml，今日累计 {today.water_ml}ml。")
         self.logger.log("water_confirmed", f"{ml}ml recorded")
 
     def _snooze_water(self) -> None:
