@@ -40,6 +40,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "system": {
         "autostart": False,
         "show_main_on_start": False,
+        "sound_volume_percent": 80,
     },
 }
 

@@ -15,6 +15,7 @@ class ConfigStoreTest(unittest.TestCase):
             self.assertEqual(config["reminders"]["water_interval_minutes"], 30)
             self.assertEqual(config["reminders"]["sedentary_interval_minutes"], 45)
             self.assertEqual(config["work_time"]["start"], "08:30")
+            self.assertEqual(config["system"]["sound_volume_percent"], 80)
 
     def test_version_is_migrated_to_current_release(self):
         with TemporaryDirectory() as temp:

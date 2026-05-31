@@ -82,7 +82,7 @@ class CameraPresenceDetector:
         load_path = self._opencv_safe_path(cascade_path)
         cascade = self._cv2.CascadeClassifier(str(load_path))
         if cascade.empty():
-            cached_path = self._cache_cascade_for_opencv(cascade_path)
+            cached_path = self._cache_model_for_opencv(cascade_path)
             if cached_path is not None:
                 cascade = self._cv2.CascadeClassifier(str(cached_path))
         if cascade.empty():
@@ -94,9 +94,9 @@ class CameraPresenceDetector:
             str(path).encode("ascii")
             return path
         except UnicodeEncodeError:
-            return self._cache_cascade_for_opencv(path) or path
+            return self._cache_model_for_opencv(path) or path
 
-    def _cache_cascade_for_opencv(self, cascade_path: Path) -> Path | None:
+    def _cache_model_for_opencv(self, model_path: Path) -> Path | None:
         candidates = [
             Path(r"C:\ProgramData\HealthTrayReminder"),
             Path(r"C:\Windows\Temp\HealthTrayReminder"),
@@ -104,9 +104,9 @@ class CameraPresenceDetector:
         for folder in candidates:
             try:
                 folder.mkdir(parents=True, exist_ok=True)
-                target = folder / cascade_path.name
-                if not target.exists() or target.stat().st_size != cascade_path.stat().st_size:
-                    copyfile(cascade_path, target)
+                target = folder / model_path.name
+                if not target.exists() or target.stat().st_size != model_path.stat().st_size:
+                    copyfile(model_path, target)
                 if target.exists() and target.stat().st_size > 0:
                     return target
             except Exception:
@@ -125,14 +125,12 @@ class CameraPresenceDetector:
             self._prepare_capture(cap)
 
             frames_checked = 0
-            best_detections = 0
             for _ in range(self.sample_frames):
                 ok, frame = cap.read()
                 if not ok or frame is None:
                     continue
                 frames_checked += 1
                 detection_count, detector_name = self._detect_person_count(frame)
-                best_detections = max(best_detections, detection_count)
                 if detection_count > 0:
                     return CameraResult(
                         True,

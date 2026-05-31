@@ -19,7 +19,6 @@ from .core.config import ConfigStore
 from .core.event_log import EventLogger
 from .core.health_state import HealthStateStore
 from .core.paths import get_data_paths
-from .platform.sound import play_ribbit
 from .platform.tray import TrayController
 from .services.reminders import ReminderEvent, ReminderService
 from .ui.main_window import MainWindow
@@ -43,7 +42,7 @@ class AppController:
         self.root.report_callback_exception = self._handle_tk_error
         self._apply_style()
 
-        self.popup = PopupManager(self.root)
+        self.popup = PopupManager(self.root, self._sound_volume)
         self.service = ReminderService(self._get_config, self.ui_queue, self.state, self.logger)
         self.main_window = MainWindow(
             self.root,
@@ -92,6 +91,12 @@ class AppController:
 
     def _remaining_seconds(self) -> tuple[int, int]:
         return self.service.engine.remaining_seconds(datetime.now(), self.config)
+
+    def _sound_volume(self) -> int:
+        try:
+            return int(self.config.get("system", {}).get("sound_volume_percent", 80))
+        except (TypeError, ValueError):
+            return 80
 
     def _poll_ui_queue(self) -> None:
         if self._stopping:

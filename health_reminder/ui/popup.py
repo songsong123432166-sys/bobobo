@@ -11,8 +11,9 @@ from .water_input import WaterInputDialog
 
 
 class PopupManager:
-    def __init__(self, root: tk.Tk) -> None:
+    def __init__(self, root: tk.Tk, get_sound_volume: Callable[[], int] | None = None) -> None:
         self.root = root
+        self.get_sound_volume = get_sound_volume or (lambda: 80)
         self._active: tk.Toplevel | None = None
         self._away_active: tk.Toplevel | None = None
         self._water_dialog = WaterInputDialog(root, timeout_ms=600_000)
@@ -23,7 +24,7 @@ class PopupManager:
         on_water: Callable[[int], None],
         on_snooze: Callable[[], None],
     ) -> None:
-        play_ribbit()
+        self._play_sound()
 
         if event.kind in ("water", "combined"):
             self._water_dialog.show(on_submit=on_water)
@@ -83,7 +84,7 @@ class PopupManager:
     def show_away_reason(self, on_select: Callable[[str], None]) -> None:
         if self._away_active and self._away_active.winfo_exists():
             return
-        play_ribbit()
+        self._play_sound()
 
         win = tk.Toplevel(self.root)
         self._away_active = win
@@ -130,6 +131,9 @@ class PopupManager:
         win.bind("<space>", close_without_record)
         win.bind("<Escape>", close_without_record)
         win.after(50, win.focus_force)
+
+    def _play_sound(self) -> None:
+        play_ribbit(self.get_sound_volume())
 
     def _slide(self, win: tk.Toplevel, start_x: int, target_x: int, target_y: int,
                step: int = 0, total_steps: int = 18) -> None:

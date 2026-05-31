@@ -582,7 +582,14 @@ class MainWindow:
                 ("中央弹窗", "detection.center_popup_enabled", config["detection"]["center_popup_enabled"]),
             ],
         )
-        self._settings_group(wrap, "系统设置", [("开机自启", "system.autostart", autostart.is_enabled())])
+        self._settings_group(
+            wrap,
+            "系统设置",
+            [
+                ("开机自启", "system.autostart", autostart.is_enabled()),
+                ("提示音音量（0-100）", "system.sound_volume_percent", config["system"]["sound_volume_percent"]),
+            ],
+        )
         ttk.Button(wrap, text="保存设置", command=self._save_settings).pack(anchor="e", pady=(0, 18), padx=2)
         self._settings_log(wrap)
 
