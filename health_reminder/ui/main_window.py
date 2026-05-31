@@ -575,6 +575,7 @@ class MainWindow:
                 ("空闲判断时间（秒）", "detection.idle_after_seconds", config["detection"]["idle_after_seconds"]),
                 ("摄像头触发空闲时间（秒）", "detection.camera_idle_threshold_seconds", config["detection"]["camera_idle_threshold_seconds"]),
                 ("摄像头检测间隔（秒）", "detection.camera_interval_seconds", config["detection"]["camera_interval_seconds"]),
+                ("无人后摄像头检测间隔（秒）", "detection.camera_away_interval_seconds", config["detection"]["camera_away_interval_seconds"]),
                 ("离席红灯阈值（秒）", "detection.away_red_after_seconds", config["detection"]["away_red_after_seconds"]),
                 ("站起检测间隔（秒）", "detection.stand_watch_interval_seconds", config["detection"]["stand_watch_interval_seconds"]),
                 ("站起检测持续时间（秒）", "detection.stand_watch_duration_seconds", config["detection"]["stand_watch_duration_seconds"]),

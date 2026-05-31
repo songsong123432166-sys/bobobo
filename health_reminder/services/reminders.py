@@ -12,7 +12,6 @@ from ..core.event_log import EventLogger
 from ..core.health_state import HealthStateStore
 from ..platform.camera import CameraPresenceDetector
 from ..platform.media import is_media_playing
-from ..platform.sound import play_ribbit
 from ..platform.windows_idle import seconds_since_last_input
 
 
@@ -259,7 +258,7 @@ class ReminderService:
         idle_threshold = int(detection.get("camera_idle_threshold_seconds", 60))
         if idle_seconds < idle_threshold:
             return
-        interval = max(10, int(detection.get("camera_interval_seconds", 60)))
+        interval = self._camera_interval(detection)
         if now_mono - self._last_camera_check < interval:
             return
         self._last_camera_check = now_mono
@@ -278,6 +277,11 @@ class ReminderService:
         confirm_misses = max(1, int(detection.get("camera_confirm_misses", 3)))
         if self._camera_misses >= confirm_misses:
             self._mark_absent(now_mono, "camera")
+
+    def _camera_interval(self, detection: dict[str, Any]) -> int:
+        if self._presence_status == "using":
+            return max(5, int(detection.get("camera_interval_seconds", 15)))
+        return max(15, int(detection.get("camera_away_interval_seconds", 60)))
 
     def _mark_present(self, now_mono: float, source: str) -> None:
         was_away = self._presence_status != "using"

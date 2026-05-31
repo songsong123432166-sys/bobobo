@@ -16,6 +16,9 @@ class ConfigStoreTest(unittest.TestCase):
             self.assertEqual(config["reminders"]["sedentary_interval_minutes"], 45)
             self.assertEqual(config["work_time"]["start"], "08:30")
             self.assertEqual(config["system"]["sound_volume_percent"], 80)
+            self.assertEqual(config["detection"]["camera_idle_threshold_seconds"], 20)
+            self.assertEqual(config["detection"]["camera_interval_seconds"], 15)
+            self.assertEqual(config["detection"]["camera_away_interval_seconds"], 60)
 
     def test_version_is_migrated_to_current_release(self):
         with TemporaryDirectory() as temp:

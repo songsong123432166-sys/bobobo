@@ -67,6 +67,22 @@ class ReminderDecisionEngineTest(unittest.TestCase):
             service._mark_present(110.0, "test")
             self.assertTrue(ui_queue.empty())
 
+    def test_camera_interval_slows_down_after_away(self):
+        config = DEFAULT_CONFIG.copy()
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            service = ReminderService(
+                lambda: config,
+                Queue(),
+                HealthStateStore(root / "health_score.json", root / "away_reason.json"),
+                EventLogger(root / "run.log"),
+            )
+            detection = config["detection"]
+            self.assertEqual(service._camera_interval(detection), 15)
+            service._mark_absent(100.0, "test")
+            self.assertEqual(service._camera_interval(detection), 60)
+
 
 if __name__ == "__main__":
     unittest.main()
