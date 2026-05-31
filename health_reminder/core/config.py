@@ -9,7 +9,7 @@ from .storage import deep_merge, read_json, write_json
 
 
 DEFAULT_CONFIG: dict[str, Any] = {
-    "version": "v2.7.7",
+    "version": "v2.7.9",
     "work_time": {
         "start": "08:30",
         "end": "17:00",

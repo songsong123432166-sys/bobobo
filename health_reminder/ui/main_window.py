@@ -38,13 +38,6 @@ def format_duration(seconds: int) -> str:
 def metric_value(data: dict[str, Any], key: str) -> int:
     if not isinstance(data, dict):
         return 0
-
-
-def safe_int(value: Any, default: int) -> int:
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
     try:
         return int(data.get(key, 0))
     except (TypeError, ValueError):
@@ -372,9 +365,6 @@ class MainWindow:
         self._visual_labels["last_status"] = status
         self._metric_line(body, "运行时长", "run_seconds", BLUE)
         self._metric_line(body, "统计日期", "date", GREEN)
-        self._metric_line(body, "喝水目标", "goal_water", BLUE)
-        self._metric_line(body, "起身目标", "goal_stand", GREEN)
-        self._metric_line(body, "最长久坐目标", "goal_sit", RED)
 
 
 
@@ -395,15 +385,6 @@ class MainWindow:
             "date": stats.date,
             "last_status": stats.last_status,
         }
-        goals = self.config_store.load().get("goals", {})
-        water_goal = max(1, safe_int(goals.get("water_ml"), 2000))
-        stand_goal = max(1, safe_int(goals.get("stand_count"), 8))
-        sit_goal = max(1, safe_int(goals.get("max_sit_streak_minutes"), 45))
-        values.update({
-            "goal_water": f"{stats.water_ml}/{water_goal} ml",
-            "goal_stand": f"{stats.stand_count}/{stand_goal} 次",
-            "goal_sit": f"{stats.max_sit_streak_minutes}/{sit_goal} 分钟",
-        })
         for key, value in values.items():
             if key in self._visual_labels:
                 self._visual_labels[key].configure(text=value)

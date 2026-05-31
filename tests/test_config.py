@@ -28,7 +28,7 @@ class ConfigStoreTest(unittest.TestCase):
             paths = DataPaths(Path(temp))
             paths.config.write_text('{"version": "v2.7.6-beta"}', encoding="utf-8")
             config = ConfigStore(paths).load()
-            self.assertEqual(config["version"], "v2.7.7")
+            self.assertEqual(config["version"], "v2.7.9")
 
 
 if __name__ == "__main__":
