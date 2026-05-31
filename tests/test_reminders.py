@@ -1,8 +1,14 @@
 from datetime import datetime, timedelta
+from pathlib import Path
+from queue import Queue
+from tempfile import TemporaryDirectory
 import unittest
 
 from health_reminder.core.config import DEFAULT_CONFIG
+from health_reminder.core.event_log import EventLogger
+from health_reminder.core.health_state import HealthStateStore
 from health_reminder.services.reminders import ReminderDecisionEngine, in_do_not_disturb
+from health_reminder.services.reminders import ReminderService
 
 
 class ReminderDecisionEngineTest(unittest.TestCase):
@@ -43,6 +49,23 @@ class ReminderDecisionEngineTest(unittest.TestCase):
         self.assertTrue(in_do_not_disturb(datetime(2026, 5, 29, 23, 30), config))
         self.assertTrue(in_do_not_disturb(datetime(2026, 5, 30, 6, 30), config))
         self.assertFalse(in_do_not_disturb(datetime(2026, 5, 30, 12, 0), config))
+
+    def test_center_popup_switch_controls_away_reason_dialog(self):
+        config = DEFAULT_CONFIG.copy()
+        config["detection"] = {**config["detection"], "center_popup_enabled": False}
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            ui_queue: Queue = Queue()
+            service = ReminderService(
+                lambda: config,
+                ui_queue,
+                HealthStateStore(root / "health_score.json", root / "away_reason.json"),
+                EventLogger(root / "run.log"),
+            )
+            service._mark_absent(100.0, "test")
+            service._mark_present(110.0, "test")
+            self.assertTrue(ui_queue.empty())
 
 
 if __name__ == "__main__":

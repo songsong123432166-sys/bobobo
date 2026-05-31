@@ -289,9 +289,9 @@ class ReminderService:
             self.engine.confirm_stand()
             self.logger.log("presence_return", source)
             self.state.set_status("\u7535\u8111\u6b63\u5728\u4f7f\u7528\uff0c\u4e45\u5750\u8ba1\u65f6\u5df2\u91cd\u65b0\u5f00\u59cb")
-            if self._away_pending:
+            if self._away_pending and self._center_popup_enabled():
                 self.ui_queue.put(("away_reason", None))
-                self._away_pending = False
+            self._away_pending = False
 
     def _mark_absent(self, now_mono: float, source: str) -> None:
         if self._presence_status == "using":
@@ -302,6 +302,10 @@ class ReminderService:
             self.state.set_status("\u68c0\u6d4b\u5230\u4eba\u4e0d\u5728\u7535\u8111\u524d")
         self._presence_status = "away"
         self._away_pending = True
+
+    def _center_popup_enabled(self) -> bool:
+        config = self._get_config()
+        return bool(config.get("detection", {}).get("center_popup_enabled", True))
 
     def _publish_presence_metrics(self, now_mono: float, config: dict[str, Any]) -> None:
         red_after = int(config.get("detection", {}).get("away_red_after_seconds", 1200))
