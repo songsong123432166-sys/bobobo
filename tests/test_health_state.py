@@ -2,13 +2,34 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from health_reminder.core.health_state import HealthStateStore, calculate_health_score
+from health_reminder.core.health_state import HealthStateStore
+from health_reminder.core.scoring import calculate_score
 
 
 class HealthStateTest(unittest.TestCase):
     def test_score_is_bounded(self):
-        self.assertEqual(calculate_health_score({"water_count": 99, "stand_count": 99, "run_seconds": 999999}), 97)
-        self.assertEqual(calculate_health_score({"sedentary_alerts": 99, "away_count": 99}), 32)
+        best = calculate_score(
+            {
+                "water_ml": 2200,
+                "stand_count": 8,
+                "toilet_count": 6,
+                "toilet_max_gap_hours": 2,
+                "max_sit_streak_minutes": 30,
+                "smoke_count": 0,
+            }
+        )
+        worst = calculate_score(
+            {
+                "water_ml": 0,
+                "stand_count": 0,
+                "toilet_count": 20,
+                "toilet_max_gap_hours": 5,
+                "max_sit_streak_minutes": 180,
+                "smoke_count": 12,
+            }
+        )
+        self.assertEqual(best.total, 100)
+        self.assertEqual(worst.total, 3)
 
     def test_increment_today(self):
         with TemporaryDirectory() as temp:
