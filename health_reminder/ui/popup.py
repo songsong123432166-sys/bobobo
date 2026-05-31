@@ -116,6 +116,10 @@ class PopupManager:
                 win.destroy()
             self._away_active = None
 
+        def close_without_record(_event: tk.Event | None = None) -> str:
+            choose("\u672a\u8bb0\u5f55")
+            return "break"
+
         for index, reason in enumerate(reasons):
             button = ttk.Button(grid, text=reason, command=lambda item=reason: choose(item))
             button.grid(row=index // 2, column=index % 2, padx=6, pady=6, sticky="ew")
@@ -123,6 +127,9 @@ class PopupManager:
         grid.columnconfigure(1, weight=1)
         ttk.Button(frame, text="\u4e0d\u8bb0\u5f55",
                    command=lambda: choose("\u672a\u8bb0\u5f55")).pack(anchor="e", pady=(12, 0))
+        win.bind("<space>", close_without_record)
+        win.bind("<Escape>", close_without_record)
+        win.after(50, win.focus_force)
 
     def _slide(self, win: tk.Toplevel, start_x: int, target_x: int, target_y: int,
                step: int = 0, total_steps: int = 18) -> None:
