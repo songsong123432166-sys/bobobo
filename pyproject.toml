@@ -11,6 +11,7 @@ dependencies = [
   "pillow>=10.0",
   "pystray>=0.19",
   "schedule>=1.2",
+  "customtkinter>=5.2",
 ]
 
 [project.optional-dependencies]
