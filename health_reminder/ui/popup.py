@@ -111,7 +111,15 @@ class PopupManager:
         grid.pack(fill="x")
         reasons = ["\u4e0a\u5395\u6240", "\u5f00\u4f1a", "\u62bd\u6839\u70df", "\u5916\u52e4"]
 
+        closed = False
+
         def choose(reason: str) -> None:
+            nonlocal closed
+            if closed:
+                return
+            closed = True
+            self.root.unbind_all("<space>")
+            self.root.unbind_all("<Escape>")
             on_select(reason)
             if win.winfo_exists():
                 win.destroy()
@@ -128,9 +136,10 @@ class PopupManager:
         grid.columnconfigure(1, weight=1)
         ttk.Button(frame, text="\u4e0d\u8bb0\u5f55",
                    command=lambda: choose("\u672a\u8bb0\u5f55")).pack(anchor="e", pady=(12, 0))
-        win.bind("<space>", close_without_record)
-        win.bind("<Escape>", close_without_record)
-        win.after(50, win.focus_force)
+        self.root.bind_all("<space>", close_without_record)
+        self.root.bind_all("<Escape>", close_without_record)
+        win.protocol("WM_DELETE_WINDOW", lambda: choose("\u672a\u8bb0\u5f55"))
+        win.after(50, lambda: (win.lift(), win.focus_force()))
 
     def _play_sound(self) -> None:
         play_ribbit(self.get_sound_volume())

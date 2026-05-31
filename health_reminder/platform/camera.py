@@ -15,7 +15,7 @@ class CameraResult:
 
 
 class CameraPresenceDetector:
-    def __init__(self, camera_index: int = 0, sample_frames: int = 3, max_width: int = 640) -> None:
+    def __init__(self, camera_index: int = 0, sample_frames: int = 5, max_width: int = 800) -> None:
         self.camera_index = camera_index
         self.sample_frames = max(1, sample_frames)
         self.max_width = max(160, max_width)
@@ -36,6 +36,8 @@ class CameraPresenceDetector:
             cascade_names = [
                 "haarcascade_frontalface_default.xml",
                 "haarcascade_profileface.xml",
+                "haarcascade_upperbody.xml",
+                "haarcascade_fullbody.xml",
             ]
             for name in cascade_names:
                 cascade_path = Path(cv2.data.haarcascades) / name
@@ -69,7 +71,7 @@ class CameraPresenceDetector:
                 str(safe_path),
                 "",
                 (self.max_width, 480),
-                score_threshold=0.75,
+                score_threshold=0.45,
                 nms_threshold=0.3,
                 top_k=5000,
             )
@@ -203,13 +205,14 @@ class CameraPresenceDetector:
         gray = self._cv2.equalizeHist(gray)
         flipped = self._cv2.flip(gray, 1)
         best_count = 0
-        for _name, cascade in self._cascades:
+        for name, cascade in self._cascades:
+            min_size = (44, 44) if "face" in name else (64, 64)
             for image in (gray, flipped):
                 faces = cascade.detectMultiScale(
                     image,
                     scaleFactor=1.08,
-                    minNeighbors=5,
-                    minSize=(44, 44),
+                    minNeighbors=4,
+                    minSize=min_size,
                 )
                 best_count = max(best_count, len(faces))
                 if best_count > 0:
