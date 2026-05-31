@@ -40,11 +40,11 @@ class PopupManager:
         win.attributes("-topmost", True)
         win.configure(bg="#f4f5f7")
 
-        width, height = 330, 168
+        width, height = 420, 210
         screen_w = win.winfo_screenwidth()
         screen_h = win.winfo_screenheight()
-        target_x = screen_w - width - 24
-        target_y = screen_h - height - 58
+        target_x = screen_w - width - 30
+        target_y = screen_h - height - 66
         start_x = screen_w + 12
         win.geometry(f"{width}x{height}+{start_x}+{target_y}")
 
@@ -56,16 +56,16 @@ class PopupManager:
             "work_start": "#34a853",
             "work_end": "#ff6b5f",
         }.get(event.kind, "#2f80ed")
-        tk.Frame(card, width=5, bg=color).pack(side="left", fill="y")
+        tk.Frame(card, width=7, bg=color).pack(side="left", fill="y")
 
         body = tk.Frame(card, bg="white")
-        body.pack(side="left", fill="both", expand=True, padx=18, pady=16)
+        body.pack(side="left", fill="both", expand=True, padx=24, pady=22)
         tk.Label(body, text=event.title, bg="white", fg="#1f2328",
-                 font=("Microsoft YaHei UI", 14, "bold")).pack(anchor="w")
+                 font=("Microsoft YaHei UI", 16, "bold")).pack(anchor="w")
         tk.Label(
             body, text=event.message, bg="white", fg="#5c6570",
-            font=("Microsoft YaHei UI", 9), wraplength=270, justify="left",
-        ).pack(anchor="w", pady=(7, 12))
+            font=("Microsoft YaHei UI", 11), wraplength=340, justify="left",
+        ).pack(anchor="w", pady=(10, 16))
 
         actions = tk.Frame(body, bg="white")
         actions.pack(anchor="e", fill="x")
