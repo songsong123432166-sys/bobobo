@@ -153,6 +153,7 @@ class MainWindow:
         self._visual_canvases: dict[str, tk.Canvas] = {}
         self._selected_day = datetime.now().date().isoformat()
         self._history_mode = "chart"
+        self._history_body: tk.Frame | None = None
         self._nav_buttons: dict = {}
 
     def show(self) -> None:
@@ -252,6 +253,7 @@ class MainWindow:
         self._cancel_refresh()
         self._visual_labels = {}
         self._visual_canvases = {}
+        self._history_body = None
         self.setting_vars = {}
         if self.scroll_page is not None:
             self.scroll_page.destroy()
@@ -534,14 +536,29 @@ class MainWindow:
         ttk.Button(header, text="列表视图", command=lambda: self._set_history_mode("list")).pack(side="right")
         body = tk.Frame(parent, bg="white")
         body.pack(fill="both", expand=True, padx=18, pady=(0, 16))
-        if self._history_mode == "chart":
-            self._history_chart(body)
-        else:
-            self._history_list(body)
+        self._history_body = body
+        self._render_history_body()
 
     def _set_history_mode(self, mode: str) -> None:
+        if self._history_mode == mode:
+            return
         self._history_mode = mode
+        if self.page == "calendar" and self._history_body is not None and self._history_body.winfo_exists():
+            self._render_history_body()
+            if self.scroll_page is not None:
+                self.scroll_page.canvas.configure(scrollregion=self.scroll_page.canvas.bbox("all"))
+            return
         self._render_page()
+
+    def _render_history_body(self) -> None:
+        if self._history_body is None:
+            return
+        for child in self._history_body.winfo_children():
+            child.destroy()
+        if self._history_mode == "chart":
+            self._history_chart(self._history_body)
+        else:
+            self._history_list(self._history_body)
 
     def _history_chart(self, parent: tk.Frame) -> None:
         history = dict(sorted(self.state.history().items(), reverse=True)[:14])
