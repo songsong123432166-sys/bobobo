@@ -1,7 +1,8 @@
-﻿"""Water intake input popup with 10-minute auto-dismiss."""
+"""Water intake input popup with 10-minute auto-dismiss."""
 from __future__ import annotations
 
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import ttk
 from typing import Callable
 
@@ -15,19 +16,22 @@ class WaterInputDialog:
     """
 
     def __init__(self, root: tk.Tk, timeout_ms: int = 600_000) -> None:
+        """初始化饮水量输入对话框，设置超时自动关闭（默认10分钟）。"""
         self.root = root
         self.timeout_ms = timeout_ms
         self._win: tk.Toplevel | None = None
 
     @property
     def active(self) -> bool:
+        """对话框是否正在显示。"""
         return self._win is not None and self._win.winfo_exists()
 
     def show(self, on_submit: Callable[[int], None]) -> None:
+        """显示饮水量输入对话框，包含预设按钮和手动输入框。"""
         if self.active:
             return
 
-        win = tk.Toplevel(self.root)
+        win = ctk.CTkToplevel(self.root)
         self._win = win
         win.overrideredirect(True)
         win.attributes("-topmost", True)
@@ -79,11 +83,13 @@ class WaterInputDialog:
         actions.pack(anchor="e", fill="x")
 
         def close() -> None:
+            """关闭对话框并清理资源。"""
             if win.winfo_exists():
                 win.destroy()
             self._win = None
 
         def submit() -> None:
+            """提交用户输入的饮水量并关闭对话框。"""
             try:
                 ml = int(entry_var.get().strip())
                 if ml > 0:

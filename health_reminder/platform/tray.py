@@ -8,6 +8,7 @@ from .icon import create_tray_icon
 
 
 class TrayController:
+    """系统托盘控制器，管理托盘图标和右键菜单。"""
     def __init__(
         self,
         on_open: Callable[[], None],
@@ -27,6 +28,7 @@ class TrayController:
         self._thread: threading.Thread | None = None
 
     def start(self) -> None:
+        """启动托盘图标线程。"""
         try:
             import pystray
 
@@ -47,6 +49,7 @@ class TrayController:
             self._icon = None
 
     def stop(self) -> None:
+        """停止托盘图标。"""
         try:
             if self._icon is not None:
                 self._icon.stop()

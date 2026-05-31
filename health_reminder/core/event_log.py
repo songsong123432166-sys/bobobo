@@ -6,12 +6,14 @@ from threading import Lock
 
 
 class EventLogger:
+    """事件日志记录器，每条日志包含时间戳、事件类型和详情。"""
     def __init__(self, path: Path, max_bytes: int = 1_000_000) -> None:
         self.path = path
         self.max_bytes = max_bytes
         self._lock = Lock()
 
     def log(self, event: str, detail: str = "") -> None:
+        """记录一条事件日志。"""
         stamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         line = f"{stamp} | {event}"
         if detail:
@@ -27,6 +29,7 @@ class EventLogger:
             pass
 
     def tail(self, count: int = 20) -> list[str]:
+        """读取最近N条日志，用于界面展示。"""
         try:
             if not self.path.exists():
                 return []

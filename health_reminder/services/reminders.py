@@ -26,6 +26,7 @@ REMINDER_TITLES = {
 
 @dataclass
 class ReminderEvent:
+    """提醒事件数据类，包含提醒类型和相关文案。"""
     kind: str
     title: str
     message: str
@@ -130,6 +131,7 @@ class ReminderDecisionEngine:
 
 
 class ReminderService:
+    """提醒后台服务，在独立线程中运行提醒引擎。"""
     TICK_SECONDS = 5
 
     def __init__(
@@ -159,10 +161,12 @@ class ReminderService:
         self._last_work_event: str | None = None
 
     def start(self) -> None:
+        """启动提醒服务线程。"""
         self._thread = threading.Thread(target=self._run, name="reminder-service", daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
+        """停止提醒服务线程。"""
         self._stop_event.set()
 
     def pause_for(self, minutes: int) -> None:

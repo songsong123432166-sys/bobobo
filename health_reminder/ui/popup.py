@@ -1,7 +1,8 @@
-﻿"""Popup windows for reminders and away-reason input."""
+"""Popup windows for reminders and away-reason input."""
 from __future__ import annotations
 
 import tkinter as tk
+import customtkinter as ctk
 from tkinter import ttk
 from typing import Callable
 
@@ -11,6 +12,7 @@ from .water_input import WaterInputDialog
 
 
 class PopupManager:
+    """弹窗管理器，负责提醒弹窗和离席原因弹窗的显示。"""
     def __init__(self, root: tk.Tk, get_sound_volume: Callable[[], int] | None = None) -> None:
         self.root = root
         self.get_sound_volume = get_sound_volume or (lambda: 80)
@@ -25,6 +27,7 @@ class PopupManager:
         on_snooze: Callable[[], None],
     ) -> None:
         self._play_sound()
+        """显示右下角滑入提醒弹窗。"""
 
         if event.kind in ("water", "combined"):
             self._water_dialog.show(on_submit=on_water)
@@ -34,7 +37,7 @@ class PopupManager:
     def _show_simple_popup(self, event: ReminderEvent) -> None:
         if self._active and self._active.winfo_exists():
             return
-        win = tk.Toplevel(self.root)
+        win = ctk.CTkToplevel(self.root)
         self._active = win
         win.overrideredirect(True)
         win.attributes("-topmost", True)
@@ -82,11 +85,12 @@ class PopupManager:
         win.after(22000, close)
 
     def show_away_reason(self, on_select: Callable[[str], None]) -> None:
+        """显示屏幕中央离席原因选择弹窗。"""
         if self._away_active and self._away_active.winfo_exists():
             return
         self._play_sound()
 
-        win = tk.Toplevel(self.root)
+        win = ctk.CTkToplevel(self.root)
         self._away_active = win
         win.title("\u79bb\u5e2d\u539f\u56e0")
         win.attributes("-topmost", True)

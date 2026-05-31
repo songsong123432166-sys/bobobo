@@ -11,6 +11,7 @@ from typing import Any
 
 @dataclass(frozen=True)
 class ScoreBreakdown:
+    """评分细分结果，包含各维度得分、总分、等级和标签。"""
     total: int
     grade: str
     label: str

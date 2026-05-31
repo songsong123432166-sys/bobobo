@@ -54,9 +54,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
 
 @dataclass
 class ConfigStore:
+    """配置文件存储类，自动处理默认值合并和JSON读写。"""
     paths: DataPaths
 
     def load(self) -> dict[str, Any]:
+        """加载配置文件，缺失字段自动补全为默认值。"""
         loaded = read_json(self.paths.config, {})
         config = deep_merge(deepcopy(DEFAULT_CONFIG), loaded if isinstance(loaded, dict) else {})
         config["version"] = DEFAULT_CONFIG["version"]
@@ -64,6 +66,7 @@ class ConfigStore:
         return config
 
     def save(self, config: dict[str, Any]) -> bool:
+        """将配置写入JSON文件。"""
         merged = deep_merge(deepcopy(DEFAULT_CONFIG), config)
         merged["version"] = DEFAULT_CONFIG["version"]
         return write_json(self.paths.config, merged)

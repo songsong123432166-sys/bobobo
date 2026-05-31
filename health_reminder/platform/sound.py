@@ -38,6 +38,7 @@ def play_ribbit(volume_percent: int = 80) -> None:
 
 
 def _play_sync(volume_percent: int) -> None:
+    """同步播放提示音，根据音量百分比调整WAV音量。"""
     try:
         import winsound
 
@@ -48,6 +49,7 @@ def _play_sync(volume_percent: int) -> None:
 
 
 def _clamp_volume(volume_percent: int) -> int:
+    """将音量百分比限制在0-100范围内。"""
     try:
         return max(0, min(100, int(volume_percent)))
     except (TypeError, ValueError):
@@ -55,6 +57,7 @@ def _clamp_volume(volume_percent: int) -> int:
 
 
 def _volume_adjusted_wav(source: Path, volume_percent: int) -> Path:
+    """根据音量百分比调整WAV文件音量，返回临时文件路径。"""
     if volume_percent >= 100:
         return source
 
@@ -78,6 +81,7 @@ def _volume_adjusted_wav(source: Path, volume_percent: int) -> Path:
 
 
 def _scale_pcm(frames: bytes, sample_width: int, factor: float) -> bytes:
+    """按比例缩放PCM音频数据的振幅。"""
     if sample_width == 1:
         return bytes(max(0, min(255, round((sample - 128) * factor + 128))) for sample in frames)
 

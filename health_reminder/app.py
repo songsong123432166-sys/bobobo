@@ -1,4 +1,4 @@
-﻿"""Application controller wiring UI, services, and platform components."""
+"""Application controller wiring UI, services, and platform components."""
 from __future__ import annotations
 
 import queue
@@ -26,6 +26,7 @@ from .ui.popup import PopupManager
 
 
 class AppController:
+    """应用控制器，负责编排UI、服务和平台组件。"""
     def __init__(self) -> None:
         self.paths = get_data_paths()
         self.config_store = ConfigStore(self.paths)
@@ -68,6 +69,7 @@ class AppController:
             self.logger.log("data_path_degraded", self.paths.error or str(self.paths.root))
 
     def run(self) -> None:
+        """启动应用主循环。"""
         self.logger.log("app_start", __version__)
         self.service.start()
         self.tray.start()
@@ -77,6 +79,7 @@ class AppController:
         self.root.mainloop()
 
     def stop(self) -> None:
+        """停止应用，清理后台服务和托盘。"""
         if self._stopping:
             return
         self._stopping = True

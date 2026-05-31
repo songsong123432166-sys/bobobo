@@ -35,6 +35,7 @@ DEFAULT_DAY: dict[str, Any] = {
 
 @dataclass
 class TodayStats:
+    """今日健康数据快照，包含所有指标和评分。"""
     date: str
     water_count: int
     stand_count: int
@@ -56,6 +57,7 @@ class TodayStats:
 
 
 class HealthStateStore:
+    """健康状态持久化存储，支持按天记录各项健康指标。"""
     def __init__(self, score_path: Path, away_path: Path) -> None:
         self.score_path = score_path
         self.away_path = away_path
@@ -81,6 +83,7 @@ class HealthStateStore:
         return write_json(self.score_path, data)
 
     def increment(self, metric: str, amount: int = 1) -> None:
+        """递增指定指标（如喝水次数、起身次数）。"""
         with self._lock:
             data = self._load()
             day = self._day(data)
@@ -88,11 +91,13 @@ class HealthStateStore:
             self._save(data)
 
     def add_seconds(self, metric: str, seconds: int) -> None:
+        """累加时间类指标（如久坐时长、运行时长）。"""
         if seconds <= 0:
             return
         self.increment(metric, seconds)
 
     def set_status(self, status: str) -> None:
+        """更新状态描述文字。"""
         with self._lock:
             data = self._load()
             day = self._day(data)
@@ -100,6 +105,7 @@ class HealthStateStore:
             self._save(data)
 
     def set_presence(self, presence_status: str, sedentary_seconds: int) -> None:
+        """更新在席状态和久坐时长。"""
         with self._lock:
             data = self._load()
             day = self._day(data)
@@ -112,6 +118,7 @@ class HealthStateStore:
             self._save(data)
 
     def record_water_ml(self, ml: int) -> None:
+        """记录一次饮水，自动递增喝水次数。"""
         with self._lock:
             data = self._load()
             day = self._day(data)
@@ -120,6 +127,7 @@ class HealthStateStore:
             self._save(data)
 
     def record_toilet(self) -> None:
+        """记录一次如厕。"""
         now = datetime.now()
         with self._lock:
             data = self._load()
@@ -136,6 +144,7 @@ class HealthStateStore:
             self._save(data)
 
     def record_smoke(self, count: int = 1) -> None:
+        """记录一次抽烟。"""
         with self._lock:
             data = self._load()
             day = self._day(data)
@@ -143,6 +152,7 @@ class HealthStateStore:
             self._save(data)
 
     def record_away_reason(self, reason: str) -> None:
+        """记录离席原因。"""
         now = datetime.now().isoformat(timespec="seconds")
         entry = {"time": now, "reason": reason}
         with self._lock:
@@ -165,6 +175,7 @@ class HealthStateStore:
             write_json(self.away_path, data)
 
     def today(self) -> TodayStats:
+        """获取今日健康数据，自动计算健康评分。"""
         with self._lock:
             data = self._load()
             key = date.today().isoformat()
@@ -193,6 +204,7 @@ class HealthStateStore:
             )
 
     def history(self) -> dict[str, Any]:
+        """获取历史数据，用于日历和图表展示。"""
         return self._load().get("days", {})
 
 

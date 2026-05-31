@@ -12,6 +12,7 @@ class LASTINPUTINFO(ctypes.Structure):
 
 
 def seconds_since_last_input() -> float:
+    """获取鼠标键盘空闲时长（秒），通过Windows API查询。"""
     if sys.platform != "win32":
         return 0.0
     try:

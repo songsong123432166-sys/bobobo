@@ -45,6 +45,7 @@ def metric_value(data: dict[str, Any], key: str) -> int:
 
 
 class ScrollPage:
+    """可滚动页面容器，带薄型自动隐藏滚动条。"""
     _BAR_W = 6
     _BAR_COLOR = "#c5c9d0"
     _HIDE_DELAY = 1200
@@ -118,6 +119,7 @@ class ScrollPage:
 
 
 class MainWindow:
+    """主界面窗口，包含可视化数据、记录日历和设置三个页面。"""
     def __init__(
         self,
         root: tk.Tk,
@@ -162,7 +164,7 @@ class MainWindow:
             self.window.lift()
             self._schedule_refresh()
             return
-        self.window = tk.Toplevel(self.root)
+        self.window = ctk.CTkToplevel(self.root)
         self.window.title(f"健康提醒 {__version__}")
         self.window.geometry("980x650")
         self.window.minsize(860, 560)

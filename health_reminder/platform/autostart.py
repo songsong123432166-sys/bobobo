@@ -14,12 +14,14 @@ APP_VALUE = "HealthTrayReminder"
 
 
 def current_command() -> str:
+    """获取当前启动快捷方式指向的命令。"""
     if getattr(sys, "frozen", False):
         return f'"{Path(sys.executable)}"'
     return f'"{Path(sys.executable)}" -m health_reminder'
 
 
 def is_enabled() -> bool:
+    """检查当前是否已设置开机自启。"""
     if winreg is None:
         return False
     try:
@@ -31,6 +33,7 @@ def is_enabled() -> bool:
 
 
 def set_enabled(enabled: bool) -> bool:
+    """启用或禁用开机自启（通过Windows启动文件夹快捷方式）。"""
     if winreg is None:
         return False
     try:

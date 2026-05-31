@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 import sys
@@ -44,6 +44,7 @@ def configure_tcl_tk() -> None:
 
 
 def _find_tcl_root(base: Path) -> Path | None:
+    """在给定路径下查找Tcl库根目录。"""
     candidates = [
         base / "tcl",
         base / "_internal" / "tcl",
@@ -57,6 +58,7 @@ def _find_tcl_root(base: Path) -> Path | None:
 
 
 def _add_dll_dir(path: Path) -> None:
+    """将目录添加到DLL搜索路径，确保Tcl/Tk依赖库能被找到。"""
     if not path.exists() or not hasattr(os, "add_dll_directory"):
         return
     try:

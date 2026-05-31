@@ -15,6 +15,7 @@ class CameraResult:
 
 
 class CameraPresenceDetector:
+    """摄像头人体检测器，支持YuNet DNN、HOG和背景差分三重检测方案。"""
     def __init__(self, camera_index: int = 0, sample_frames: int = 5, max_width: int = 800) -> None:
         self.camera_index = camera_index
         self.sample_frames = max(1, sample_frames)
