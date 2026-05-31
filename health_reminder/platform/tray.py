@@ -11,10 +11,16 @@ class TrayController:
     def __init__(
         self,
         on_open: Callable[[], None],
+        on_pause_30: Callable[[], None],
+        on_pause_60: Callable[[], None],
+        on_resume: Callable[[], None],
         on_about: Callable[[], None],
         on_exit: Callable[[], None],
     ) -> None:
         self.on_open = on_open
+        self.on_pause_30 = on_pause_30
+        self.on_pause_60 = on_pause_60
+        self.on_resume = on_resume
         self.on_about = on_about
         self.on_exit = on_exit
         self._icon = None
@@ -26,6 +32,10 @@ class TrayController:
 
             menu = pystray.Menu(
                 pystray.MenuItem("打开主界面", lambda _icon, _item: self.on_open(), default=True),
+                pystray.MenuItem("暂停提醒 30 分钟", lambda _icon, _item: self.on_pause_30()),
+                pystray.MenuItem("暂停提醒 1 小时", lambda _icon, _item: self.on_pause_60()),
+                pystray.MenuItem("恢复提醒", lambda _icon, _item: self.on_resume()),
+                pystray.Menu.SEPARATOR,
                 pystray.MenuItem(f"关于程序 / {__version__}", lambda _icon, _item: self.on_about()),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("退出程序", lambda _icon, _item: self.on_exit()),

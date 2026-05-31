@@ -51,9 +51,16 @@ class AppController:
             self.logger,
             self._remaining_seconds,
             self._save_config,
+            self._test_sound,
+            self._test_camera,
+            self._test_popup,
+            self._test_center_popup,
         )
         self.tray = TrayController(
             on_open=lambda: self.ui_queue.put(("show_main", None)),
+            on_pause_30=lambda: self.ui_queue.put(("pause_reminders", 30)),
+            on_pause_60=lambda: self.ui_queue.put(("pause_reminders", 60)),
+            on_resume=lambda: self.ui_queue.put(("resume_reminders", None)),
             on_about=lambda: self.ui_queue.put(("about", None)),
             on_exit=lambda: self.ui_queue.put(("quit", None)),
         )
@@ -135,6 +142,14 @@ class AppController:
             return
         if kind == "away_reason":
             self.popup.show_away_reason(self._record_away_reason)
+            return
+        if kind == "pause_reminders":
+            self.service.pause_for(int(payload))
+            self.logger.log("tray_pause", f"{payload} minutes")
+            return
+        if kind == "resume_reminders":
+            self.service.resume()
+            return
 
     def _show_reminder(self, event: ReminderEvent) -> None:
         self.popup.show_reminder(
@@ -159,6 +174,28 @@ class AppController:
             self.logger.log("away_reason", reason)
         else:
             self.logger.log("away_reason_skipped", "user skipped")
+
+    def _test_sound(self) -> None:
+        from .platform.sound import play_ribbit
+
+        play_ribbit(self._sound_volume())
+        self.logger.log("test_sound", "played")
+
+    def _test_camera(self) -> str:
+        message = self.service.camera_diagnostic()
+        self.logger.log("test_camera", message.replace("\n", " | "))
+        return message
+
+    def _test_popup(self) -> None:
+        self.popup.show_reminder(
+            ReminderEvent("sedentary", "测试提醒", "这是右下角提醒弹窗测试。"),
+            on_water=lambda _ml=250: None,
+            on_snooze=lambda: None,
+        )
+        self.logger.log("test_popup", "shown")
+
+    def _test_center_popup(self) -> None:
+        self.popup.show_away_reason(lambda reason: self.logger.log("test_center_popup", reason))
 
     def _handle_tk_error(self, exc: type[BaseException], value: BaseException, _traceback) -> None:
         self.logger.log("tk_error", f"{exc.__name__}: {value}")

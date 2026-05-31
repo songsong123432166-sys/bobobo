@@ -7,10 +7,13 @@
 摄像头不会一直工作。后台服务每 5 秒检查一次状态，但只有满足以下条件时才会真正打开摄像头：
 
 - 设置项 `detection.camera_enabled` 为 `true`。
+- 设置项 `detection.privacy_mode` 为 `false`。
 - 键盘鼠标空闲时长达到 `detection.camera_idle_threshold_seconds`，默认 20 秒。
 - 距离上一次常规摄像头检测已超过 `detection.camera_interval_seconds`，默认 15 秒。
 
 如果键盘或鼠标在 20 秒内有操作，程序会直接认为用户正在使用电脑，并重置久坐计时，不打开摄像头。
+
+如果隐私模式开启，程序不会调用摄像头。
 
 ## 常规离席检测
 

@@ -38,6 +38,13 @@ def format_duration(seconds: int) -> str:
 def metric_value(data: dict[str, Any], key: str) -> int:
     if not isinstance(data, dict):
         return 0
+
+
+def safe_int(value: Any, default: int) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
     try:
         return int(data.get(key, 0))
     except (TypeError, ValueError):
@@ -126,6 +133,10 @@ class MainWindow:
         logger: EventLogger,
         get_remaining: Callable[[], tuple[int, int]],
         on_save_config: Callable[[dict[str, Any]], None],
+        on_test_sound: Callable[[], None],
+        on_test_camera: Callable[[], str],
+        on_test_popup: Callable[[], None],
+        on_test_center_popup: Callable[[], None],
     ) -> None:
         self.root = root
         self.config_store = config_store
@@ -133,6 +144,10 @@ class MainWindow:
         self.logger = logger
         self.get_remaining = get_remaining
         self.on_save_config = on_save_config
+        self.on_test_sound = on_test_sound
+        self.on_test_camera = on_test_camera
+        self.on_test_popup = on_test_popup
+        self.on_test_center_popup = on_test_center_popup
         self.window: tk.Toplevel | None = None
         self.content: tk.Frame | None = None
         self.page: str = "visual"
@@ -357,6 +372,9 @@ class MainWindow:
         self._visual_labels["last_status"] = status
         self._metric_line(body, "运行时长", "run_seconds", BLUE)
         self._metric_line(body, "统计日期", "date", GREEN)
+        self._metric_line(body, "喝水目标", "goal_water", BLUE)
+        self._metric_line(body, "起身目标", "goal_stand", GREEN)
+        self._metric_line(body, "最长久坐目标", "goal_sit", RED)
 
 
 
@@ -377,6 +395,15 @@ class MainWindow:
             "date": stats.date,
             "last_status": stats.last_status,
         }
+        goals = self.config_store.load().get("goals", {})
+        water_goal = max(1, safe_int(goals.get("water_ml"), 2000))
+        stand_goal = max(1, safe_int(goals.get("stand_count"), 8))
+        sit_goal = max(1, safe_int(goals.get("max_sit_streak_minutes"), 45))
+        values.update({
+            "goal_water": f"{stats.water_ml}/{water_goal} ml",
+            "goal_stand": f"{stats.stand_count}/{stand_goal} 次",
+            "goal_sit": f"{stats.max_sit_streak_minutes}/{sit_goal} 分钟",
+        })
         for key, value in values.items():
             if key in self._visual_labels:
                 self._visual_labels[key].configure(text=value)
@@ -580,7 +607,17 @@ class MainWindow:
                 ("站起检测间隔（秒）", "detection.stand_watch_interval_seconds", config["detection"]["stand_watch_interval_seconds"]),
                 ("站起检测持续时间（秒）", "detection.stand_watch_duration_seconds", config["detection"]["stand_watch_duration_seconds"]),
                 ("摄像头检测", "detection.camera_enabled", config["detection"]["camera_enabled"]),
+                ("隐私模式（暂停摄像头）", "detection.privacy_mode", config["detection"]["privacy_mode"]),
                 ("中央弹窗", "detection.center_popup_enabled", config["detection"]["center_popup_enabled"]),
+            ],
+        )
+        self._settings_group(
+            wrap,
+            "今日目标",
+            [
+                ("喝水目标（ml）", "goals.water_ml", config["goals"]["water_ml"]),
+                ("起身目标（次）", "goals.stand_count", config["goals"]["stand_count"]),
+                ("最长久坐目标（分钟）", "goals.max_sit_streak_minutes", config["goals"]["max_sit_streak_minutes"]),
             ],
         )
         self._settings_group(
@@ -591,6 +628,7 @@ class MainWindow:
                 ("提示音音量（0-100）", "system.sound_volume_percent", config["system"]["sound_volume_percent"]),
             ],
         )
+        self._test_tools(wrap)
         ttk.Button(wrap, text="保存设置", command=self._save_settings).pack(anchor="e", pady=(0, 18), padx=2)
         self._settings_log(wrap)
 
@@ -608,6 +646,19 @@ class MainWindow:
                 var = tk.StringVar(value=str(value))
                 ttk.Entry(row, textvariable=var, width=18).pack(side="right")
             self.setting_vars[key] = var
+
+    def _test_tools(self, parent: tk.Frame) -> None:
+        card = self._card(parent, "测试工具")
+        card.pack(fill="x", pady=(0, 14))
+        row = tk.Frame(card, bg="white")
+        row.pack(fill="x", padx=18, pady=(0, 16))
+        ttk.Button(row, text="测试提示音", command=self.on_test_sound).pack(side="left", padx=(0, 8))
+        ttk.Button(row, text="测试右下角弹窗", command=self.on_test_popup).pack(side="left", padx=(0, 8))
+        ttk.Button(row, text="测试中央弹窗", command=self.on_test_center_popup).pack(side="left", padx=(0, 8))
+        ttk.Button(row, text="测试摄像头", command=self._show_camera_diagnostic).pack(side="left")
+
+    def _show_camera_diagnostic(self) -> None:
+        messagebox.showinfo("摄像头检测结果", self.on_test_camera())
 
     def _settings_log(self, parent: tk.Frame) -> None:
         log_card = self._card(parent, "运行日志")

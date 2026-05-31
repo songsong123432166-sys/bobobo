@@ -83,6 +83,27 @@ class ReminderDecisionEngineTest(unittest.TestCase):
             service._mark_absent(100.0, "test")
             self.assertEqual(service._camera_interval(detection), 60)
 
+    def test_pause_for_suppresses_due_reminders(self):
+        base = datetime(2026, 5, 29, 8, 0)
+        config = DEFAULT_CONFIG.copy()
+        engine = ReminderDecisionEngine(base)
+        event = engine.due(base + timedelta(minutes=90), config, paused=True)
+        self.assertIsNone(event)
+
+    def test_privacy_mode_skips_camera_diagnostic(self):
+        config = DEFAULT_CONFIG.copy()
+        config["detection"] = {**config["detection"], "privacy_mode": True}
+
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            service = ReminderService(
+                lambda: config,
+                Queue(),
+                HealthStateStore(root / "health_score.json", root / "away_reason.json"),
+                EventLogger(root / "run.log"),
+            )
+            self.assertIn("隐私模式", service.camera_diagnostic())
+
 
 if __name__ == "__main__":
     unittest.main()

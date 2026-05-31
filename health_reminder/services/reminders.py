@@ -147,7 +147,7 @@ class ReminderService:
         self.camera = CameraPresenceDetector()
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
-        self._paused = False
+        self._paused_until: datetime | None = None
         self._presence_status = "using"
         self._away_started_mono: float | None = None
         self._sedentary_started_mono: float = time.monotonic()
@@ -165,6 +165,24 @@ class ReminderService:
     def stop(self) -> None:
         self._stop_event.set()
 
+    def pause_for(self, minutes: int) -> None:
+        self._paused_until = datetime.now() + timedelta(minutes=max(1, minutes))
+        self.logger.log("reminders_paused", f"{minutes} minutes")
+
+    def resume(self) -> None:
+        self._paused_until = None
+        self.logger.log("reminders_resumed", "manual resume")
+
+    def is_paused(self, now: datetime | None = None) -> bool:
+        if self._paused_until is None:
+            return False
+        current = now or datetime.now()
+        if current >= self._paused_until:
+            self._paused_until = None
+            self.logger.log("reminders_resumed", "pause expired")
+            return False
+        return True
+
     def _run(self) -> None:
         while not self._stop_event.is_set():
             try:
@@ -176,9 +194,11 @@ class ReminderService:
     def _tick(self) -> None:
         now = datetime.now()
         config = self._get_config()
-        self._check_work_events(now, config)
+        paused = self.is_paused(now)
+        if not paused:
+            self._check_work_events(now, config)
 
-        event = self.engine.due(now, config, paused=self._paused)
+        event = self.engine.due(now, config, paused=paused)
         if event is not None:
             self.logger.log("reminder_fired", event.kind)
             self.ui_queue.put(("reminder", event))
@@ -253,7 +273,7 @@ class ReminderService:
 
     def _check_camera(self, now_mono: float, idle_seconds: float, config: dict[str, Any]) -> None:
         detection = config.get("detection", {})
-        if not detection.get("camera_enabled", True):
+        if detection.get("privacy_mode", False) or not detection.get("camera_enabled", True):
             return
         idle_threshold = int(detection.get("camera_idle_threshold_seconds", 60))
         if idle_seconds < idle_threshold:
@@ -282,6 +302,16 @@ class ReminderService:
         if self._presence_status == "using":
             return max(5, int(detection.get("camera_interval_seconds", 15)))
         return max(15, int(detection.get("camera_away_interval_seconds", 60)))
+
+    def camera_diagnostic(self) -> str:
+        detection = self._get_config().get("detection", {})
+        if detection.get("privacy_mode", False):
+            return "隐私模式已开启，摄像头检测已暂停。"
+        if not detection.get("camera_enabled", True):
+            return "摄像头检测已关闭。"
+        result = self.camera.check()
+        status = "检测到有人" if result.person_present else "未检测到人" if result.person_present is False else "无法判断"
+        return f"{status}\n可用：{result.available}\n结果：{result.message}"
 
     def _mark_present(self, now_mono: float, source: str) -> None:
         was_away = self._presence_status != "using"

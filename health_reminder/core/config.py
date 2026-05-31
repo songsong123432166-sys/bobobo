@@ -29,6 +29,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "idle_after_seconds": 300,
         "away_after_seconds": 180,
         "camera_enabled": True,
+        "privacy_mode": False,
         "camera_idle_threshold_seconds": 20,
         "camera_interval_seconds": 15,
         "camera_away_interval_seconds": 60,
@@ -42,6 +43,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "autostart": False,
         "show_main_on_start": False,
         "sound_volume_percent": 80,
+    },
+    "goals": {
+        "water_ml": 2000,
+        "stand_count": 8,
+        "max_sit_streak_minutes": 45,
     },
 }
 
