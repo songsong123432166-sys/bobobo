@@ -6,6 +6,7 @@ from tkinter import messagebox, ttk
 from typing import Any, Callable
 
 import customtkinter as ctk
+from . import scaling
 
 from ..core.config import ConfigStore
 from ..core.event_log import EventLogger
@@ -101,7 +102,7 @@ class SettingsPageMixin:
         for label, key, value in rows:
             row = tk.Frame(card, bg="white")
             row.pack(fill="x", padx=18, pady=7)
-            tk.Label(row, text=label, bg="white", fg=TEXT, font=("Microsoft YaHei UI", 10)).pack(side="left")
+            tk.Label(row, text=label, bg="white", fg=TEXT, font=scaling.font("Microsoft YaHei UI", 10)).pack(side="left")
             if isinstance(value, bool):
                 var = tk.BooleanVar(value=value)
                 ttk.Checkbutton(row, variable=var).pack(side="right")
@@ -118,7 +119,7 @@ class SettingsPageMixin:
             text="摄像头只在键鼠空闲后短暂检测是否有人，不保存画面，也不会上传画面。开启隐私模式后，程序不会调用摄像头。",
             bg="white",
             fg=MUTED,
-            font=("Microsoft YaHei UI", 10),
+            font=scaling.font("Microsoft YaHei UI", 10),
             wraplength=720,
             justify="left",
         ).pack(fill="x", padx=18, pady=(0, 16))
@@ -182,7 +183,7 @@ class SettingsPageMixin:
         log_card = self._card(parent, "运行日志")
         log_card.pack(fill="x", pady=(0, 18))
         for line in self.logger.tail(10) or ["暂无日志"]:
-            tk.Label(log_card, text=line, bg="white", fg="#4b5563", anchor="w", font=("Consolas", 9)).pack(fill="x",
+            tk.Label(log_card, text=line, bg="white", fg="#4b5563", anchor="w", font=scaling.font("Consolas", 9)).pack(fill="x",
                 padx=18, pady=3)
 
     def _save_settings(self) -> None:

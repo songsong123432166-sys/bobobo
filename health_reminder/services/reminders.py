@@ -306,6 +306,7 @@ class ReminderService:
         self._away_pending = False
 
         self._last_work_event: str | None = None
+        self._last_tick_mono: float = time.monotonic()
 
 
     def start(self) -> None:
@@ -414,6 +415,14 @@ class ReminderService:
         self._check_camera(now_mono, idle, config)
 
         self._publish_presence_metrics(now_mono, config)
+
+        # 累加运行时长和电脑使用时长
+        elapsed = int(now_mono - self._last_tick_mono)
+        self._last_tick_mono = now_mono
+        if elapsed > 0:
+            self.state.add_seconds("run_seconds", elapsed)
+            if self._presence_status == "using":
+                self.state.add_seconds("computer_seconds", elapsed)
 
 
     def _check_work_events(self, now: datetime, config: dict[str, Any]) -> None:

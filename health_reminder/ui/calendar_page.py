@@ -8,6 +8,7 @@ from tkinter import ttk
 from typing import Any
 
 import customtkinter as ctk
+from . import scaling
 
 BG = "#f3f4f6"
 TEXT = "#20242a"
@@ -62,9 +63,9 @@ class CalendarPageMixin:
         for index, (label, key, color) in enumerate(metrics):
             item = tk.Frame(box, bg="#f9fafb", highlightbackground="#dfe4ea", highlightthickness=1)
             item.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 8, 0), pady=0)
-            tk.Label(item, text=label, bg="#f9fafb", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(anchor="w", padx=10,
+            tk.Label(item, text=label, bg="#f9fafb", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", padx=10,
                 pady=(8, 2))
-            value = tk.Label(item, text="", bg="#f9fafb", fg=color, font=("Microsoft YaHei UI", 14, "bold"))
+            value = tk.Label(item, text="", bg="#f9fafb", fg=color, font=scaling.font("Microsoft YaHei UI", 14, "bold"))
             value.pack(anchor="w", padx=10, pady=(0, 8))
             self._visual_labels[key] = value
             box.columnconfigure(index, weight=1)
@@ -97,7 +98,7 @@ class CalendarPageMixin:
             text=self._weekly_summary(),
             bg="white",
             fg=TEXT,
-            font=("Microsoft YaHei UI", 11, "bold"),
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
             wraplength=720,
             justify="left",
         ).pack(anchor="w")
@@ -108,7 +109,7 @@ class CalendarPageMixin:
         grid = tk.Frame(parent, bg="white")
         grid.pack(fill="x", padx=18, pady=12)
         for index, name in enumerate(["一", "二", "三", "四", "五", "六", "日"]):
-            tk.Label(grid, text=name, bg="white", fg=MUTED, font=("Microsoft YaHei UI", 9)).grid(row=0, column=index,
+            tk.Label(grid, text=name, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).grid(row=0, column=index,
                 sticky="ew", pady=4)
         for row, week in enumerate(calendar.monthcalendar(now.year, now.month), start=1):
             for col, day in enumerate(week):
@@ -129,7 +130,7 @@ class CalendarPageMixin:
         cell.grid(row=row, column=col, sticky="nsew")
         cell.pack_propagate(False)
         text_color = "white" if data or selected else MUTED
-        day_label = tk.Label(cell, text=label, bg=color, fg=text_color, font=("Microsoft YaHei UI", 10, "bold"))
+        day_label = tk.Label(cell, text=label, bg=color, fg=text_color, font=scaling.font("Microsoft YaHei UI", 10, "bold"))
         day_label.pack(expand=True)
         if day:
             cell.bind("<Button-1>", lambda _event, item=key: self._select_day(item))
@@ -153,15 +154,15 @@ class CalendarPageMixin:
         for index, (label, value, color) in enumerate(values):
             box = tk.Frame(row, bg="white")
             box.grid(row=0, column=index, sticky="nsew", padx=(0 if index == 0 else 12, 0))
-            tk.Label(box, text=label, bg="white", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(anchor="w")
-            tk.Label(box, text=value, bg="white", fg=color, font=("Microsoft YaHei UI", 12, "bold")).pack(anchor="w",
+            tk.Label(box, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w")
+            tk.Label(box, text=value, bg="white", fg=color, font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(anchor="w",
                 pady=(4, 0))
             row.columnconfigure(index, weight=1)
 
     def _history_switcher(self, parent: tk.Frame) -> None:
         header = tk.Frame(parent, bg="white")
         header.pack(fill="x", padx=18, pady=(16, 8))
-        tk.Label(header, text="历史统计", bg="white", fg=TEXT, font=("Microsoft YaHei UI", 12, "bold")).pack(side="left")
+        tk.Label(header, text="历史统计", bg="white", fg=TEXT, font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(side="left")
         ttk.Button(header, text="柱状统计图", command=lambda: self._set_history_mode("chart")).pack(side="right", padx=(8,
             0))
         ttk.Button(header, text="列表视图", command=lambda: self._set_history_mode("list")).pack(side="right")
@@ -197,7 +198,7 @@ class CalendarPageMixin:
         canvas = tk.Canvas(parent, height=260, bg="white", highlightthickness=0)
         canvas.pack(fill="x", expand=True)
         if not days:
-            canvas.create_text(360, 120, text="暂无历史数据", fill=MUTED, font=("Microsoft YaHei UI", 11))
+            canvas.create_text(360, 120, text="暂无历史数据", fill=MUTED, font=scaling.font("Microsoft YaHei UI", 11))
             return
         width = 760
         left, top, bottom = 42, 20, 218
@@ -213,12 +214,12 @@ class CalendarPageMixin:
                 bar_h = int((value / max_value) * 160)
                 x0 = base_x + offset * 8
                 canvas.create_rectangle(x0, bottom - bar_h, x0 + 6, bottom, fill=color, outline="")
-            canvas.create_text(base_x + 12, bottom + 16, text=day[-5:], fill=MUTED, font=("Microsoft YaHei UI", 8))
+            canvas.create_text(base_x + 12, bottom + 16, text=day[-5:], fill=MUTED, font=scaling.font("Microsoft YaHei UI", 8))
         legend = [("喝水", BLUE), ("起身", GREEN), ("离席", YELLOW)]
         for index, (label, color) in enumerate(legend):
             x = left + index * 70
             canvas.create_rectangle(x, 238, x + 12, 250, fill=color, outline="")
-            canvas.create_text(x + 36, 244, text=label, fill=MUTED, font=("Microsoft YaHei UI", 9))
+            canvas.create_text(x + 36, 244, text=label, fill=MUTED, font=scaling.font("Microsoft YaHei UI", 9))
 
     def _history_list(self, parent: tk.Frame) -> None:
         history = self.state.history()
@@ -229,6 +230,5 @@ class CalendarPageMixin:
                 f"离席 {metric_value(data, 'away_count')}  "
                 f"使用 {format_duration(metric_value(data, 'computer_seconds'))}"
             )
-            tk.Label(parent, text=text, bg="white", fg="#4b5563", anchor="w", font=("Microsoft YaHei UI",
-                9)).pack(fill="x", pady=5)
+            tk.Label(parent, text=text, bg="white", fg="#4b5563", anchor="w", font=scaling.font("Microsoft YaHei UI", 9)).pack(fill="x", pady=5)
 

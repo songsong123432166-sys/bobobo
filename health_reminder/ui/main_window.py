@@ -15,6 +15,7 @@ from ..core.health_state import HealthStateStore
 from ..core.paths import resource_path
 from ..platform import autostart
 from ..core.scoring import ScoreBreakdown
+from . import scaling
 from .settings_page import SettingsPageMixin
 from .calendar_page import CalendarPageMixin
 
@@ -197,11 +198,11 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
         self._sidebar_icon = self._load_app_icon(44)
         if self._sidebar_icon is not None:
             tk.Label(header, image=self._sidebar_icon, bg=SIDEBAR).pack(side="left", padx=(0, 10))
-        tk.Label(header, text="控制台", bg=SIDEBAR, fg=TEXT, font=("Microsoft YaHei UI", 19, "bold")).pack(side="left")
+        tk.Label(header, text="控制台", bg=SIDEBAR, fg=TEXT, font=scaling.font("Microsoft YaHei UI", 19, "bold")).pack(side="left")
         self._nav_button(nav, "可视化数据", "visual").pack(fill="x", padx=16, pady=5)
         self._nav_button(nav, "记录日历", "calendar").pack(fill="x", padx=16, pady=5)
         self._nav_button(nav, "设置", "settings").pack(fill="x", padx=16, pady=5)
-        tk.Label(nav, text=__version__, bg=SIDEBAR, fg="#9ca3af", font=("Microsoft YaHei UI", 9)).pack(side="bottom",
+        tk.Label(nav, text=__version__, bg=SIDEBAR, fg="#9ca3af", font=scaling.font("Microsoft YaHei UI", 9)).pack(side="bottom",
             anchor="w", padx=24, pady=22)
 
         self.content = tk.Frame(shell, bg=BG)
@@ -241,7 +242,7 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
             fg=TEXT,
             activebackground="#eef4ff",
             activeforeground=BLUE,
-            font=("Microsoft YaHei UI", 11),
+            font=scaling.font("Microsoft YaHei UI", 11),
             padx=14,
             pady=12,
             command=lambda: self._switch(page),
@@ -297,13 +298,13 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
     def _header(self, parent: tk.Misc, title: str, subtitle: str) -> None:
         frame = tk.Frame(parent, bg=BG)
         frame.pack(fill="x", padx=28, pady=(26, 16))
-        tk.Label(frame, text=title, bg=BG, fg=TEXT, font=("Microsoft YaHei UI", 22, "bold")).pack(anchor="w")
-        tk.Label(frame, text=subtitle, bg=BG, fg=MUTED, font=("Microsoft YaHei UI", 10)).pack(anchor="w", pady=(4, 0))
+        tk.Label(frame, text=title, bg=BG, fg=TEXT, font=scaling.font("Microsoft YaHei UI", 22, "bold")).pack(anchor="w")
+        tk.Label(frame, text=subtitle, bg=BG, fg=MUTED, font=scaling.font("Microsoft YaHei UI", 10)).pack(anchor="w", pady=(4, 0))
 
     def _card(self, parent: tk.Misc, title: str | None = None) -> tk.Frame:
         frame = ctk.CTkFrame(parent, corner_radius=16, fg_color="white", border_width=1, border_color="#e0e3e8")
         if title:
-            ctk.CTkLabel(frame, text=title, text_color=TEXT, font=("Microsoft YaHei UI", 14, "bold")).pack(anchor="w",
+            ctk.CTkLabel(frame, text=title, text_color=TEXT, font=scaling.font("Microsoft YaHei UI", 14, "bold")).pack(anchor="w",
                 padx=18, pady=(16, 8))
         return frame
 
@@ -333,15 +334,15 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
         body = tk.Frame(parent, bg="white")
         body.pack(fill="x", padx=28, pady=(20, 16))
         self._score_num_label = tk.Label(body, text="--", bg="white", fg=TEXT,
-                                          font=("Microsoft YaHei UI", 52, "bold"))
+                                          font=scaling.font("Microsoft YaHei UI", 52, "bold"))
         self._score_num_label.pack(anchor="center")
         tk.Label(body, text="健康分", bg="white", fg=MUTED,
-                 font=("Microsoft YaHei UI", 13)).pack(anchor="center", pady=(2, 0))
+                 font=scaling.font("Microsoft YaHei UI", 13)).pack(anchor="center", pady=(2, 0))
         self._grade_text_label = tk.Label(body, text="", bg="white", fg=MUTED,
-                                           font=("Microsoft YaHei UI", 10))
+                                           font=scaling.font("Microsoft YaHei UI", 10))
         self._grade_text_label.pack(anchor="center", pady=(4, 0))
         self._score_tip_label = tk.Label(body, text="", bg="white", fg=MUTED,
-                                         font=("Microsoft YaHei UI", 10), wraplength=520, justify="center")
+                                         font=scaling.font("Microsoft YaHei UI", 10), wraplength=520, justify="center")
         self._score_tip_label.pack(anchor="center", pady=(6, 0))
 
     def _status_lights(self, parent: tk.Frame) -> None:
@@ -358,15 +359,15 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
             canvas.pack(side="left")
             canvas.create_oval(3, 3, 15, 15, fill="#d1d5db", outline="", tags=("dot",))
             self._visual_canvases[key] = canvas
-            tk.Label(item, text=label, bg="white", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(side="left", padx=(5,
+            tk.Label(item, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).pack(side="left", padx=(5,
                 0))
 
 
     def _metric_line(self, parent: tk.Frame, label: str, key: str, color: str) -> None:
         row = tk.Frame(parent, bg="white")
         row.pack(fill="x", padx=18, pady=5)
-        tk.Label(row, text=label, bg="white", fg=MUTED, font=("Microsoft YaHei UI", 9)).pack(side="left")
-        value = tk.Label(row, text="", bg="white", fg=color, font=("Microsoft YaHei UI", 11, "bold"))
+        tk.Label(row, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).pack(side="left")
+        value = tk.Label(row, text="", bg="white", fg=color, font=scaling.font("Microsoft YaHei UI", 11, "bold"))
         value.pack(side="right")
         self._visual_labels[key] = value
 
@@ -374,7 +375,7 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
     def _today_status(self, parent: tk.Frame) -> None:
         body = tk.Frame(parent, bg="white")
         body.pack(fill="both", expand=True, padx=18, pady=(0, 14))
-        status = tk.Label(body, text="", bg="white", fg=MUTED, font=("Microsoft YaHei UI", 10), wraplength=320,
+        status = tk.Label(body, text="", bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 10), wraplength=320,
             justify="left")
         status.pack(anchor="w", pady=(8, 18))
         self._visual_labels["last_status"] = status

@@ -59,9 +59,9 @@ def _find_tcl_root(base: Path) -> Path | None:
 
 def _add_dll_dir(path: Path) -> None:
     """将目录添加到DLL搜索路径，确保Tcl/Tk依赖库能被找到。"""
-    if not path.exists() or not hasattr(os, "add_dll_directory"):
+    if not path.exists() or not path.is_absolute() or not hasattr(os, "add_dll_directory"):
         return
     try:
         os.add_dll_directory(str(path))
-    except (tk.TclError, AttributeError):
+    except (OSError, AttributeError):
         pass
