@@ -245,6 +245,25 @@ class OnboardingWizardTest(unittest.TestCase):
         finally:
             wizard.destroy()
 
+    def test_onboarding_action_buttons_stay_fixed(self):
+        from health_reminder.core.config import DEFAULT_CONFIG
+        from health_reminder.ui.onboarding import OnboardingWizard
+
+        wizard = OnboardingWizard(self.root, DEFAULT_CONFIG.copy(), MagicMock())
+        try:
+            for page in range(wizard.TOTAL_PAGES):
+                wizard._page_index = page
+                wizard._render_page()
+                self.root.update()
+
+                self.assertEqual(wizard._btn_prev.winfo_manager(), "pack")
+                self.assertEqual(wizard._btn_skip.winfo_manager(), "pack")
+                self.assertEqual(wizard._btn_next.winfo_manager(), "pack")
+                self.assertEqual(wizard._btn_next.cget("text"), "确定")
+                self.assertEqual(wizard._btn_next.cget("width"), 110)
+        finally:
+            wizard.destroy()
+
 
 if __name__ == "__main__":
     unittest.main()

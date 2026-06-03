@@ -56,7 +56,7 @@ class OnboardingWizard(ctk.CTkToplevel):
         self._volume_var = tk.IntVar(value=config.get("system", {}).get("sound_volume_percent", 80))
 
         # ── 窗口尺寸 & 居中 ──
-        win_w, win_h = 620, 440
+        win_w, win_h = 620, 500
         sw = parent.winfo_screenwidth()
         sh = parent.winfo_screenheight()
         x = (sw - win_w) // 2
@@ -72,10 +72,12 @@ class OnboardingWizard(ctk.CTkToplevel):
         # ── 内容区 ──
         self._content = tk.Frame(self, bg=BG)
         self._content.pack(fill="both", expand=True, padx=40, pady=(16, 0))
+        self._content.pack_propagate(False)
 
-        # ── 底部按钮 ──
-        btn_bar = tk.Frame(self, bg=BG)
-        btn_bar.pack(fill="x", padx=40, pady=(0, 24))
+        # ── 底部固定按钮栏：外框按钮不随页面内容变化而移动或隐藏 ──
+        btn_bar = tk.Frame(self, bg=BG, height=42)
+        btn_bar.pack(fill="x", side="bottom", padx=40, pady=(12, 24))
+        btn_bar.pack_propagate(False)
         self._btn_prev = ctk.CTkButton(btn_bar, text="上一步", width=100,
                                         command=self._prev_page, fg_color=LINE, text_color=TEXT,
                                         hover_color="#d1d5db", font=scaling.font("Microsoft YaHei UI", 11))
@@ -84,7 +86,7 @@ class OnboardingWizard(ctk.CTkToplevel):
                                         command=self._on_skip, fg_color="transparent", text_color=MUTED,
                                         hover_color="#e5e7eb", font=scaling.font("Microsoft YaHei UI", 10))
         self._btn_skip.pack(side="left", padx=(12, 0))
-        self._btn_next = ctk.CTkButton(btn_bar, text="下一步", width=110,
+        self._btn_next = ctk.CTkButton(btn_bar, text="确定", width=110,
                                         command=self._next_page, fg_color=BLUE, text_color="white",
                                         hover_color="#1a6dd4", font=scaling.font("Microsoft YaHei UI", 11, "bold"))
         self._btn_next.pack(side="right")
@@ -93,6 +95,7 @@ class OnboardingWizard(ctk.CTkToplevel):
 
         self.grab_set()
         self.bind("<Escape>", lambda _e: self._on_skip())
+        self.bind("<Return>", lambda _e: self._next_page())
         self._render_page()
 
     # ══════════════════════════════════════
@@ -120,18 +123,8 @@ class OnboardingWizard(ctk.CTkToplevel):
 
         # 按钮状态
         self._btn_prev.configure(state="normal" if self._page_index > 0 else "disabled")
-        if self._page_index == 0:
-            self._btn_prev.pack_forget()
-        else:
-            self._btn_prev.pack(side="left")
-
-        if self._page_index == self.TOTAL_PAGES - 1:
-            self._btn_next.configure(text="开始使用", width=130)
-            self._btn_skip.pack_forget()
-        else:
-            self._btn_next.configure(text="下一步", width=110)
-            if not self._btn_skip.winfo_ismapped():
-                self._btn_skip.pack(side="left", padx=(12, 0))
+        self._btn_skip.configure(state="disabled" if self._page_index == self.TOTAL_PAGES - 1 else "normal")
+        self._btn_next.configure(text="确定", width=110)
 
     def _next_page(self) -> None:
         if self._page_index < self.TOTAL_PAGES - 1:
