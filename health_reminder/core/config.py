@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -43,6 +43,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "autostart": False,
         "show_main_on_start": False,
         "sound_volume_percent": 80,
+        "popup_mode": "app",
     },
     "goals": {
         "water_ml": 2000,

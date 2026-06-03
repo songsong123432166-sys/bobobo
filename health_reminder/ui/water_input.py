@@ -1,4 +1,4 @@
-"""Water intake input popup with 10-minute auto-dismiss."""
+﻿"""Water intake input popup with 10-minute auto-dismiss."""
 
 from __future__ import annotations
 
@@ -203,7 +203,10 @@ class WaterInputDialog:
 
 
 
+
+
         win.bind("<Return>", lambda _e: submit())
+        win.bind("<Escape>", lambda _e: close())
 
 
 

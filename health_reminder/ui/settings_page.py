@@ -1,4 +1,4 @@
-"""设置页面模块，从主界面拆分而来。"""
+﻿"""设置页面模块，从主界面拆分而来。"""
 from __future__ import annotations
 
 import tkinter as tk
@@ -91,9 +91,12 @@ class SettingsPageMixin:
                 ("提示音音量（0-100）", "system.sound_volume_percent", config["system"]["sound_volume_percent"]),
             ],
         )
+        self._popup_mode_toggle(wrap)
+        self._popup_mode_note(wrap)
         self._preset_tools(wrap)
         self._test_tools(wrap)
         ttk.Button(wrap, text="保存设置", command=self._save_settings).pack(anchor="e", pady=(0, 18), padx=2)
+        self._how_it_works_section(wrap)
         self._settings_log(wrap)
 
     def _settings_group(self, parent: tk.Frame, title: str, rows: list[tuple[str, str, Any]]) -> None:
@@ -102,7 +105,8 @@ class SettingsPageMixin:
         for label, key, value in rows:
             row = tk.Frame(card, bg="white")
             row.pack(fill="x", padx=18, pady=7)
-            tk.Label(row, text=label, bg="white", fg=TEXT, font=scaling.font("Microsoft YaHei UI", 10)).pack(side="left")
+            tk.Label(row, text=label, bg="white", fg=TEXT,
+                         font=scaling.font("Microsoft YaHei UI", 10)).pack(side="left")
             if isinstance(value, bool):
                 var = tk.BooleanVar(value=value)
                 ttk.Checkbutton(row, variable=var).pack(side="right")
@@ -111,6 +115,124 @@ class SettingsPageMixin:
                 ttk.Entry(row, textvariable=var, width=18).pack(side="right")
             self.setting_vars[key] = var
 
+
+    def _how_it_works_section(self, parent: tk.Frame) -> None:
+        """运行机制说明卡片，帮助用户理解程序工作原理。"""
+        card = self._card(parent, "⚙️ 运行机制说明")
+        card.pack(fill="x", pady=(0, 14))
+
+        # ── 检测机制 ──
+        self._mechanism_item(card, "🔍  怎么判断你在不在电脑前？",
+            "程序通过两层检测来判断你的在席状态：\n"
+            "① 键盘鼠标 — 如果你最近动过鼠标或敲过键盘，认为你在用电脑\n"
+            "② 摄像头确认 — 键鼠空闲超过 20 秒后，短暂开启摄像头检测人脸/人体\n"
+            "    连续 3 次未检测到人才判定你离开了，避免转头或遮挡造成误判",
+            border_color=BLUE)
+
+        # ── 久坐提醒 ──
+        self._mechanism_item(card, "🚶  久坐提醒怎么工作？",
+            "达到设定时间弹窗提醒你起身，弹出后自动用摄像头观察 3 分钟。\n"
+            "检测到你离开 → 自动记录一次起身，不需要手动点击。\n"
+            "3 分钟内你一直没离开 → 不记录，等下一次提醒。",
+            border_color=GREEN)
+
+        # ── 喝水提醒 ──
+        self._mechanism_item(card, "💧  喝水提醒怎么工作？",
+            "到时间后右下角弹窗 + 提示音，弹窗持续 10 分钟，输入饮水量即可记录。\n"
+            "喝水和久坐时间接近时自动合并，避免短时间内连续弹窗打扰你。",
+            border_color=YELLOW)
+
+        # ── 健康分 ──
+        self._mechanism_item(card, "📊  每日健康评分（满分 100 分）",
+            "💧 喝水 25%   🚶 起身 25%   🚽 如厕 20%   🪑 久坐 20%   🚬 抽烟 10%\n"
+            "分数不是医学诊断，只是帮你了解今天的健康习惯是否更友好。",
+            border_color=GREEN)
+
+        # ── 隐私 ──
+        self._mechanism_item(card, "🔒  隐私保护",
+            "摄像头画面不会保存、不会上传，仅在空闲时短暂开启检测。\n"
+            "可在下方「状态检测」中开启隐私模式，完全关闭摄像头。",
+            border_color=RED)
+
+    def _mechanism_item(self, parent, title, body, border_color=LINE) -> None:
+        """带彩色左边框的机制说明条目。"""
+        outer = tk.Frame(parent, bg=border_color)
+        outer.pack(fill="x", padx=14, pady=(0, 8))
+        inner = tk.Frame(outer, bg="white")
+        inner.pack(fill="both", expand=True, padx=(2, 0))
+        tk.Label(inner, text=title, bg="white", fg=TEXT,
+                 font=scaling.font("Microsoft YaHei UI", 11, "bold")).pack(anchor="w", padx=14, pady=(10, 4))
+        tk.Label(inner, text=body, bg="white", fg=MUTED,
+                 font=scaling.font("Microsoft YaHei UI", 10), justify="left", wraplength=720
+                 ).pack(anchor="w", padx=14, pady=(0, 10))
+
+
+    def _popup_mode_toggle(self, parent: tk.Frame) -> None:
+        """弹窗模式拨动开关（Apple 风格）。"""
+        card = self._card(parent, "弹窗模式")
+        card.pack(fill="x", pady=(0, 14))
+
+        row = tk.Frame(card, bg="white")
+        row.pack(fill="x", padx=18, pady=(12, 8))
+
+        # 左侧说明
+        left = tk.Frame(row, bg="white")
+        left.pack(side="left", fill="x", expand=True)
+        tk.Label(left, text="使用系统通知", bg="white", fg=TEXT,
+                 font=scaling.font("Microsoft YaHei UI", 11, "bold")).pack(anchor="w")
+        tk.Label(left, text="开启后使用 Windows 原生通知，兼容多屏高 DPI", bg="white", fg=MUTED,
+                 font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", pady=(2, 0))
+
+        # 右侧拨动开关
+        current = self.config_store.load().get("system", {}).get("popup_mode", "app")
+        self._popup_mode_var = tk.BooleanVar(value=(current == "system"))
+        self.setting_vars["system.popup_mode"] = tk.StringVar(value=current)
+        switch = ctk.CTkSwitch(
+            row, text="",
+            variable=self._popup_mode_var,
+            onvalue=True, offvalue=False,
+            command=self._on_popup_mode_toggle,
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+            button_color="white",
+            button_hover_color="#e5e7eb",
+            width=50, height=26,
+        )
+        switch.pack(side="right")
+
+        # 模式标签
+        self._popup_mode_label = tk.Label(
+            row,
+            text="系统通知" if current == "system" else "程序弹窗",
+            bg="white", fg=BLUE if current == "system" else MUTED,
+            font=scaling.font("Microsoft YaHei UI", 10, "bold"),
+        )
+        self._popup_mode_label.pack(side="right", padx=(0, 12))
+
+    def _on_popup_mode_toggle(self) -> None:
+        """拨动开关回调，更新配置。"""
+        is_system = self._popup_mode_var.get()
+        mode = "system" if is_system else "app"
+        self.setting_vars["system.popup_mode"] = tk.StringVar(value=mode)
+        self._popup_mode_label.configure(
+            text="系统通知" if is_system else "程序弹窗",
+            fg=BLUE if is_system else MUTED,
+        )
+    def _popup_mode_note(self, parent: tk.Frame) -> None:
+        """弹窗模式说明卡片。"""
+        card = self._card(parent, "弹窗模式说明")
+        card.pack(fill="x", pady=(0, 14))
+        tk.Label(
+            card,
+            text="app = 程序自定义弹窗（右下角滑入，支持动画）\n"
+                 "system = Windows 系统通知（兼容多屏高 DPI，但不支持直接输入饮水量）\n"
+                 "如果程序弹窗位置不准确，请切换为 system 模式",
+            bg="white",
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 10),
+            justify="left",
+            wraplength=720,
+        ).pack(fill="x", padx=18, pady=(0, 16))
     def _privacy_note(self, parent: tk.Frame) -> None:
         card = self._card(parent, "隐私说明")
         card.pack(fill="x", pady=(0, 14))
@@ -174,6 +296,7 @@ class SettingsPageMixin:
         ttk.Button(row, text="测试提示音", command=self.on_test_sound).pack(side="left", padx=(0, 8))
         ttk.Button(row, text="测试右下角弹窗", command=self.on_test_popup).pack(side="left", padx=(0, 8))
         ttk.Button(row, text="测试中央弹窗", command=self.on_test_center_popup).pack(side="left", padx=(0, 8))
+        ttk.Button(row, text="测试首次向导", command=self.on_test_onboarding).pack(side="left")
         ttk.Button(row, text="测试摄像头", command=self._show_camera_diagnostic).pack(side="left")
 
     def _show_camera_diagnostic(self) -> None:
@@ -183,7 +306,8 @@ class SettingsPageMixin:
         log_card = self._card(parent, "运行日志")
         log_card.pack(fill="x", pady=(0, 18))
         for line in self.logger.tail(10) or ["暂无日志"]:
-            tk.Label(log_card, text=line, bg="white", fg="#4b5563", anchor="w", font=scaling.font("Consolas", 9)).pack(fill="x",
+            tk.Label(log_card, text=line, bg="white", fg="#4b5563",
+                         anchor="w", font=scaling.font("Consolas", 9)).pack(fill="x",
                 padx=18, pady=3)
 
     def _save_settings(self) -> None:

@@ -1,4 +1,4 @@
-"""Sound playback for reminder alerts."""
+﻿"""Sound playback for reminder alerts."""
 
 from __future__ import annotations
 

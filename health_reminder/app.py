@@ -1,4 +1,4 @@
-"""Application controller wiring UI, services, and platform components."""
+﻿"""Application controller wiring UI, services, and platform components."""
 
 from __future__ import annotations
 
@@ -48,6 +48,7 @@ from .ui.main_window import MainWindow
 from .ui import scaling
 
 from .ui.popup import PopupManager
+from .ui.onboarding import OnboardingWizard
 
 
 
@@ -117,6 +118,8 @@ class AppController:
 
             self._test_center_popup,
 
+            self._test_onboarding,
+
         )
 
         self.tray = TrayController(
@@ -155,6 +158,10 @@ class AppController:
 
             self.main_window.show()
 
+        # 首次启动：弹出引导向导
+        if not self.config.get("onboarding_done", False):
+            self.root.after(500, self._show_onboarding)
+
         self.root.after(200, self._poll_ui_queue)
 
         self.root.mainloop()
@@ -190,6 +197,17 @@ class AppController:
             pass
 
 
+
+    def _show_onboarding(self) -> None:
+        """弹出首次启动向导。"""
+        OnboardingWizard(self.root, self.config, on_complete=self._onboarding_done)
+        self.logger.log("onboarding_shown", "first launch wizard")
+
+    def _onboarding_done(self, config: dict[str, Any]) -> None:
+        """向导完成后回调：保存配置并应用。"""
+        self.config_store.save(config)
+        self.config = config
+        self.logger.log("onboarding_done", "user completed onboarding")
 
     def _get_config(self) -> dict[str, Any]:
 
@@ -355,6 +373,11 @@ class AppController:
 
 
 
+    def _on_reminder_dismiss(self, reason: str = "timeout") -> None:
+        """记录提醒被忽略（超时关闭或 ESC）。"""
+        kind = getattr(self, "_last_reminder_kind", "unknown")
+        self.logger.log("reminder_dismissed", f"{kind}:{reason}")
+
     def _record_away_reason(self, reason: str) -> None:
 
         if reason != "未记录":
@@ -368,6 +391,11 @@ class AppController:
             self.logger.log("away_reason_skipped", "user skipped")
 
 
+
+    def _test_onboarding(self) -> None:
+        """测试首次启动向导（不检查 onboarding_done）。"""
+        OnboardingWizard(self.root, self.config, on_complete=self._onboarding_done)
+        self.logger.log("test_onboarding", "shown")
 
     def _test_sound(self) -> None:
 

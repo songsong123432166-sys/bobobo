@@ -1,4 +1,4 @@
-"""Popup windows for reminders and away-reason input."""
+﻿"""Popup windows for reminders and away-reason input."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from ..services.reminders import ReminderEvent
 from ..platform.sound import play_ribbit
 
 from .water_input import WaterInputDialog
+from . import system_notifier
 
 
 
@@ -71,7 +72,7 @@ class PopupManager:
 
 
 
-    def _show_simple_popup(self, event: ReminderEvent) -> None:
+    def _show_simple_popup(self, event: ReminderEvent, on_dismiss: Callable[[str], None] | None = None) -> None:
 
         if self._active and self._active.winfo_exists():
 
@@ -231,7 +232,7 @@ class PopupManager:
 
         grid.pack(fill="x")
 
-        reasons = ["上厕所", "开会", "抽根烟", "外勤"]
+        reasons = ["上厕所", "抽根烟", "蒙多想去哪就去哪"]
 
 
 
