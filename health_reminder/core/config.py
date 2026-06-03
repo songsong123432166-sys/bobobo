@@ -44,6 +44,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "show_main_on_start": False,
         "sound_volume_percent": 80,
         "popup_mode": "app",
+        "popup_retention_seconds": 600,
     },
     "goals": {
         "water_ml": 2000,

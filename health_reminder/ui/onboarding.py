@@ -54,9 +54,12 @@ class OnboardingWizard(ctk.CTkToplevel):
         self._water_var = tk.IntVar(value=config.get("reminders", {}).get("water_interval_minutes", 60))
         self._sound_var = tk.BooleanVar(value=True)
         self._volume_var = tk.IntVar(value=config.get("system", {}).get("sound_volume_percent", 80))
+        self._popup_retention_var = tk.IntVar(
+            value=config.get("system", {}).get("popup_retention_seconds", 600)
+        )
 
         # ── 窗口尺寸 & 居中 ──
-        win_w, win_h = 620, 500
+        win_w, win_h = 620, 540
         sw = parent.winfo_screenwidth()
         sh = parent.winfo_screenheight()
         x = (sw - win_w) // 2
@@ -320,17 +323,36 @@ class OnboardingWizard(ctk.CTkToplevel):
                             button_hover_color="#1a6dd4", width=220)
         s2.pack(side="right", padx=(12, 12))
 
-        # 提示音
+        # 弹窗留存时长
         r3 = tk.Frame(card, bg=CARD_BG)
-        r3.pack(fill="x", padx=20, pady=(8, 16))
-        ctk.CTkSwitch(r3, text="提示音", variable=self._sound_var,
+        r3.pack(fill="x", padx=20, pady=(0, 8))
+        tk.Label(r3, text="弹窗留存时长", bg=CARD_BG, fg=TEXT,
+                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
+        self._popup_retention_label = tk.Label(
+            r3,
+            text=self._format_popup_retention(self._popup_retention_var.get()),
+            bg=CARD_BG,
+            fg=BLUE,
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        )
+        self._popup_retention_label.pack(side="right")
+        s3 = ctk.CTkSlider(r3, from_=10, to=600, number_of_steps=59,
+                            variable=self._popup_retention_var, command=self._update_popup_retention_label,
+                            fg_color="#d1d5db", progress_color=BLUE, button_color=BLUE,
+                            button_hover_color="#1a6dd4", width=220)
+        s3.pack(side="right", padx=(12, 12))
+
+        # 提示音
+        r4 = tk.Frame(card, bg=CARD_BG)
+        r4.pack(fill="x", padx=20, pady=(8, 16))
+        ctk.CTkSwitch(r4, text="提示音", variable=self._sound_var,
                        font=scaling.font("Microsoft YaHei UI", 11),
                        fg_color="#d1d5db", progress_color=BLUE).pack(side="left")
-        ctk.CTkButton(r3, text="🔊 试听", width=70, fg_color=GREEN, text_color="white",
+        ctk.CTkButton(r4, text="🔊 试听", width=70, fg_color=GREEN, text_color="white",
                        hover_color="#2d9348", font=scaling.font("Microsoft YaHei UI", 10),
                        command=self._test_sound).pack(side="right")
 
-        tk.Label(frame, text="💡 提醒弹窗出现在屏幕右下角，10 分钟后自动消失", bg=BG, fg=MUTED,
+        tk.Label(frame, text="💡 弹窗留存时长可之后在设置页继续调整", bg=BG, fg=MUTED,
                  font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", pady=(8, 0))
 
     def _update_sedentary_label(self, val) -> None:
@@ -338,6 +360,17 @@ class OnboardingWizard(ctk.CTkToplevel):
 
     def _update_water_label(self, val) -> None:
         self._water_label.configure(text=f"{int(float(val))} 分钟")
+
+    def _update_popup_retention_label(self, val) -> None:
+        seconds = int(float(val))
+        self._popup_retention_label.configure(text=self._format_popup_retention(seconds))
+
+    def _format_popup_retention(self, seconds: int) -> str:
+        if seconds >= 60:
+            minutes = seconds // 60
+            rest = seconds % 60
+            return f"{minutes} 分钟" if rest == 0 else f"{minutes}分{rest}秒"
+        return f"{seconds} 秒"
 
     def _test_sound(self) -> None:
         from ..platform.sound import play_ribbit
@@ -420,6 +453,7 @@ class OnboardingWizard(ctk.CTkToplevel):
 
         c.setdefault("system", {})
         c["system"]["sound_volume_percent"] = int(self._volume_var.get())
+        c["system"]["popup_retention_seconds"] = int(self._popup_retention_var.get())
 
         c["onboarding_done"] = True
 

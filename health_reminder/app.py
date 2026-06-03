@@ -92,7 +92,7 @@ class AppController:
 
 
 
-        self.popup = PopupManager(self.root, self._sound_volume)
+        self.popup = PopupManager(self.root, self._sound_volume, self._popup_retention_seconds)
 
         self.service = ReminderService(self._get_config, self.ui_queue, self.state, self.logger)
 
@@ -236,6 +236,16 @@ class AppController:
         except (TypeError, ValueError):
 
             return 80
+
+    def _popup_retention_seconds(self) -> int:
+
+        try:
+
+            return int(self.config.get("system", {}).get("popup_retention_seconds", 600))
+
+        except (TypeError, ValueError):
+
+            return 600
 
 
 

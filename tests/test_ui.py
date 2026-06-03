@@ -264,6 +264,51 @@ class OnboardingWizardTest(unittest.TestCase):
         finally:
             wizard.destroy()
 
+    def test_onboarding_saves_popup_retention_seconds(self):
+        from copy import deepcopy
+
+        from health_reminder.core.config import DEFAULT_CONFIG
+        from health_reminder.ui.onboarding import OnboardingWizard
+
+        completed = MagicMock()
+        config = deepcopy(DEFAULT_CONFIG)
+        wizard = OnboardingWizard(self.root, config, completed)
+        try:
+            wizard._popup_retention_var.set(120)
+            wizard._apply_and_close()
+
+            completed.assert_called_once()
+            saved = completed.call_args.args[0]
+            self.assertEqual(saved["system"]["popup_retention_seconds"], 120)
+        finally:
+            if wizard.winfo_exists():
+                wizard.destroy()
+
+
+class PopupManagerTest(unittest.TestCase):
+    """提醒弹窗管理器测试。"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = tk.Tk()
+        cls.root.withdraw()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except tk.TclError:
+            pass
+
+    def test_retention_seconds_are_clamped(self):
+        from health_reminder.ui.popup import PopupManager
+
+        low = PopupManager(self.root, get_retention_seconds=lambda: 1)
+        high = PopupManager(self.root, get_retention_seconds=lambda: 9999)
+
+        self.assertEqual(low._retention_ms(), 5000)
+        self.assertEqual(high._retention_ms(), 1_800_000)
+
 
 if __name__ == "__main__":
     unittest.main()

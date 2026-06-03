@@ -89,6 +89,7 @@ class SettingsPageMixin:
             [
                 ("开机自启", "system.autostart", autostart.is_enabled()),
                 ("提示音音量（0-100）", "system.sound_volume_percent", config["system"]["sound_volume_percent"]),
+                ("弹窗留存时长（秒）", "system.popup_retention_seconds", config["system"]["popup_retention_seconds"]),
             ],
         )
         self._popup_mode_toggle(wrap)

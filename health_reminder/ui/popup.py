@@ -30,17 +30,23 @@ class PopupManager:
 
     """弹窗管理器，负责提醒弹窗和离席原因弹窗的显示。"""
 
-    def __init__(self, root: tk.Tk, get_sound_volume: Callable[[], int] | None = None) -> None:
+    def __init__(
+        self,
+        root: tk.Tk,
+        get_sound_volume: Callable[[], int] | None = None,
+        get_retention_seconds: Callable[[], int] | None = None,
+    ) -> None:
 
         self.root = root
 
         self.get_sound_volume = get_sound_volume or (lambda: 80)
+        self.get_retention_seconds = get_retention_seconds or (lambda: 600)
 
         self._active: tk.Toplevel | None = None
 
         self._away_active: tk.Toplevel | None = None
 
-        self._water_dialog = WaterInputDialog(root, timeout_ms=600_000)
+        self._water_dialog = WaterInputDialog(root, timeout_ms=self._retention_ms())
 
 
 
@@ -63,6 +69,8 @@ class PopupManager:
 
 
         if event.kind in ("water", "combined"):
+
+            self._water_dialog.timeout_ms = self._retention_ms()
 
             self._water_dialog.show(on_submit=on_water)
 
@@ -170,7 +178,15 @@ class PopupManager:
 
         self._slide(win, start_x, target_x, target_y)
 
-        win.after(22000, close)
+        win.after(self._retention_ms(), close)
+
+    def _retention_ms(self) -> int:
+        try:
+            seconds = int(self.get_retention_seconds())
+        except (TypeError, ValueError):
+            seconds = 600
+        seconds = max(5, min(1800, seconds))
+        return seconds * 1000
 
 
 
