@@ -48,6 +48,8 @@ class OnboardingWizard(ctk.CTkToplevel):
         self._dnd_start_var = tk.StringVar(value=config.get("do_not_disturb", {}).get("start", "12:00"))
         self._dnd_end_var = tk.StringVar(value=config.get("do_not_disturb", {}).get("end", "13:00"))
         self._detection_mode = tk.StringVar(value="recommended")
+        self._mode_cards: dict[str, tk.Frame] = {}
+        self._mode_indicators: dict[str, tk.Label] = {}
         self._sedentary_var = tk.IntVar(value=config.get("reminders", {}).get("sedentary_interval_minutes", 45))
         self._water_var = tk.IntVar(value=config.get("reminders", {}).get("water_interval_minutes", 60))
         self._sound_var = tk.BooleanVar(value=True)
@@ -215,6 +217,8 @@ class OnboardingWizard(ctk.CTkToplevel):
     def _page_detection(self) -> None:
         frame = tk.Frame(self._content, bg=BG)
         frame.pack(fill="both", expand=True)
+        self._mode_cards = {}
+        self._mode_indicators = {}
 
         tk.Label(frame, text="🔍  检测模式", bg=BG, fg=TEXT,
                  font=scaling.font("Microsoft YaHei UI", 16, "bold")).pack(anchor="w", pady=(8, 4))
@@ -241,26 +245,44 @@ class OnboardingWizard(ctk.CTkToplevel):
                         highlightthickness=2, highlightcolor=border_color)
         card.pack(fill="x", pady=(0, 8))
 
-        def _on_click(_e=None, v=value):
-            self._detection_mode.set(v)
-            self._render_page()
-
-        card.bind("<Button-1>", _on_click)
+        self._mode_cards[value] = card
 
         inner = tk.Frame(card, bg=CARD_BG)
         inner.pack(fill="x", padx=16, pady=10)
-        inner.bind("<Button-1>", _on_click)
 
-        tk.Label(inner, text=title, bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(anchor="w")
+        title_row = tk.Frame(inner, bg=CARD_BG)
+        title_row.pack(fill="x")
+        indicator = tk.Label(title_row, text="●" if self._detection_mode.get() == value else "○",
+                             bg=CARD_BG, fg=BLUE if self._detection_mode.get() == value else MUTED,
+                             font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        indicator.pack(side="left", padx=(0, 8))
+        self._mode_indicators[value] = indicator
+        tk.Label(title_row, text=title, bg=CARD_BG, fg=TEXT,
+                 font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(side="left")
         sub = tk.Label(inner, text=subtitle, bg=CARD_BG, fg=BLUE,
                        font=scaling.font("Microsoft YaHei UI", 10))
         sub.pack(anchor="w", pady=(2, 0))
-        sub.bind("<Button-1>", _on_click)
         desc_label = tk.Label(inner, text=desc, bg=CARD_BG, fg=MUTED,
                               font=scaling.font("Microsoft YaHei UI", 9), wraplength=480, justify="left")
         desc_label.pack(anchor="w", pady=(2, 0))
-        desc_label.bind("<Button-1>", _on_click)
+        self._bind_click_tree(card, lambda _e=None, v=value: self._select_detection_mode(v))
+
+    def _bind_click_tree(self, widget: tk.Widget, callback) -> None:
+        """让卡片里的文字、图标和空白区域都响应点击。"""
+        widget.bind("<Button-1>", callback, add="+")
+        for child in widget.winfo_children():
+            self._bind_click_tree(child, callback)
+
+    def _select_detection_mode(self, value: str) -> None:
+        """切换检测模式，只更新卡片选中态，避免整页重绘造成点击丢失。"""
+        self._detection_mode.set(value)
+        for mode, card in self._mode_cards.items():
+            selected = mode == value
+            color = BLUE if selected else LINE
+            card.configure(highlightbackground=color, highlightcolor=color)
+            indicator = self._mode_indicators.get(mode)
+            if indicator is not None:
+                indicator.configure(text="●" if selected else "○", fg=BLUE if selected else MUTED)
 
     # ══════════════════════════════════════
     # 第 4 页：提醒方式

@@ -208,5 +208,43 @@ class ScoreDisplayTest(unittest.TestCase):
             self.assertEqual(color, "#ff6b5f")
 
 
+class OnboardingWizardTest(unittest.TestCase):
+    """首次引导向导测试。"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.root = tk.Tk()
+        cls.root.withdraw()
+
+    @classmethod
+    def tearDownClass(cls):
+        try:
+            cls.root.destroy()
+        except tk.TclError:
+            pass
+
+    def test_detection_mode_card_selection_updates_without_page_rebuild(self):
+        from health_reminder.core.config import DEFAULT_CONFIG
+        from health_reminder.ui.onboarding import OnboardingWizard
+
+        completed = MagicMock()
+        wizard = OnboardingWizard(self.root, DEFAULT_CONFIG.copy(), completed)
+        try:
+            wizard._page_index = 2
+            wizard._render_page()
+            self.root.update()
+            self.assertEqual(wizard._detection_mode.get(), "recommended")
+
+            wizard._select_detection_mode("privacy")
+            self.root.update()
+
+            self.assertEqual(wizard._detection_mode.get(), "privacy")
+            self.assertEqual(wizard._mode_indicators["privacy"].cget("text"), "●")
+            self.assertEqual(wizard._mode_indicators["recommended"].cget("text"), "○")
+            self.assertTrue(wizard._mode_cards["privacy"].winfo_exists())
+        finally:
+            wizard.destroy()
+
+
 if __name__ == "__main__":
     unittest.main()
