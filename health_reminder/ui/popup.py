@@ -1,24 +1,15 @@
 """Popup windows for reminders and away-reason input."""
 
-from __future__ import annotations
-
-
 import tkinter as tk
-
-import customtkinter as ctk
-from . import scaling
-
-from tkinter import ttk
-
 from typing import Callable
 
+import customtkinter as ctk
+from tkinter import ttk
 
 from ..services.reminders import ReminderEvent
-
 from ..platform.sound import play_ribbit
-
+from . import scaling
 from .water_input import WaterInputDialog
-from . import system_notifier
 
 
 class PopupManager:
@@ -149,7 +140,6 @@ class PopupManager:
         ).pack(anchor="w", pady=(5, 16))
         grid = tk.Frame(frame, bg="white")
         grid.pack(fill="x")
-        reasons = ["上厕所", "开会", "抽根烟", "外勤", "活动一下"]
         closed = False
 
         def choose(reason: str) -> None:
@@ -168,11 +158,20 @@ class PopupManager:
             choose("未记录")
             return "break"
 
-        for index, reason in enumerate(reasons):
-            button = ttk.Button(grid, text=reason, command=lambda item=reason: choose(item))
-            button.grid(row=index // 2, column=index % 2, padx=6, pady=6, sticky="ew")
         grid.columnconfigure(0, weight=1)
         grid.columnconfigure(1, weight=1)
+
+        top_reasons = ["上厕所", "抽根烟"]
+        for index, reason in enumerate(top_reasons):
+            button = ttk.Button(grid, text=reason, command=lambda item=reason: choose(item))
+            button.grid(row=0, column=index, padx=6, pady=6, sticky="ew")
+
+        ttk.Button(
+            grid,
+            text="蒙多想去哪就去哪",
+            command=lambda: choose("蒙多想去哪就去哪"),
+        ).grid(row=1, column=0, columnspan=2, padx=6, pady=(8, 6), sticky="ew")
+
         ttk.Button(frame, text="不记录", command=lambda: choose("未记录")).pack(
             anchor="e", pady=(12, 0)
         )
