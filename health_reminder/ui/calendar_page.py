@@ -57,7 +57,8 @@ class CalendarPageMixin:
         metrics = [
             ("今日喝水", "water_count", BLUE),
             ("今日起身", "stand_count", GREEN),
-            ("今日离席", "away_count", YELLOW),
+            ("今日如厕", "toilet_count", BLUE),
+            ("今日抽烟", "smoke_count", RED),
             ("久坐提醒", "sedentary_alerts", RED),
         ]
         for index, (label, key, color) in enumerate(metrics):

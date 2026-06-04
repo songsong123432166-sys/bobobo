@@ -331,8 +331,6 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
 
 
         self._metric_line(status_card, "电脑使用时长", "computer_seconds", RED)
-        self._metric_line(status_card, "🚽 如厕次数", "toilet_count", BLUE)
-        self._metric_line(status_card, "🚬 抽烟次数", "smoke_count", RED)
         self._daily_metrics(status_card)
 
         today_card = self._card(parent, "今日状态")

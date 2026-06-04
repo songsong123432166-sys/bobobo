@@ -109,6 +109,9 @@ class MainWindowTest(unittest.TestCase):
         self.assertIn("sedentary_seconds", self.win._visual_labels)
         self.assertIn("water_count", self.win._visual_labels)
         self.assertIn("stand_count", self.win._visual_labels)
+        self.assertIn("toilet_count", self.win._visual_labels)
+        self.assertIn("smoke_count", self.win._visual_labels)
+        self.assertNotIn("away_count", self.win._visual_labels)
 
     def test_update_visual_values_sets_text(self):
         """刷新后标签文本应为非空字符串。"""
