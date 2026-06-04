@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import threading
 from typing import Callable
@@ -9,6 +9,7 @@ from .icon import create_tray_icon
 
 class TrayController:
     """系统托盘控制器，管理托盘图标和右键菜单。"""
+
     def __init__(
         self,
         on_open: Callable[[], None],
@@ -43,7 +44,9 @@ class TrayController:
                 pystray.MenuItem("退出程序", lambda _icon, _item: self.on_exit()),
             )
             self._icon = pystray.Icon("HealthTrayReminder", create_tray_icon(), "健康提醒", menu)
-            self._thread = threading.Thread(target=self._icon.run, name="health-tray-icon", daemon=True)
+            self._thread = threading.Thread(
+                target=self._icon.run, name="health-tray-icon", daemon=True
+            )
             self._thread.start()
         except Exception:
             self._icon = None

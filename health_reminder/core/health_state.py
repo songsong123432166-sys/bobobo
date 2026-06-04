@@ -1,4 +1,5 @@
 """Health state tracking with prostatitis-oriented scoring."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -9,7 +10,6 @@ from typing import Any
 
 from .scoring import ScoreBreakdown, calculate_score
 from .storage import read_json, write_json
-
 
 DEFAULT_DAY: dict[str, Any] = {
     # Legacy fields (kept for backward compat)
@@ -36,6 +36,7 @@ DEFAULT_DAY: dict[str, Any] = {
 @dataclass
 class TodayStats:
     """今日健康数据快照，包含所有指标和评分。"""
+
     date: str
     water_count: int
     stand_count: int
@@ -58,6 +59,7 @@ class TodayStats:
 
 class HealthStateStore:
     """健康状态持久化存储，支持按天记录各项健康指标。"""
+
     def __init__(self, score_path: Path, away_path: Path) -> None:
         self.score_path = score_path
         self.away_path = away_path
@@ -139,7 +141,10 @@ class HealthStateStore:
             # Calculate max gap
             if len(times) >= 2:
                 parsed = [datetime.fromisoformat(t) for t in times]
-                gaps = [(parsed[i+1] - parsed[i]).total_seconds() / 3600 for i in range(len(parsed) - 1)]
+                gaps = [
+                    (parsed[i + 1] - parsed[i]).total_seconds() / 3600
+                    for i in range(len(parsed) - 1)
+                ]
                 day["toilet_max_gap_hours"] = round(max(gaps), 2)
             self._save(data)
 

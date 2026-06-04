@@ -1,5 +1,6 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Windows 系统原生通知，支持按钮回调。"""
+
 from __future__ import annotations
 
 import threading
@@ -18,11 +19,15 @@ from ..services.reminders import ReminderEvent
 _toaster = InteractableWindowsToaster("健康提醒助手")
 
 
-def _show_toast(title: str, message: str,
-                buttons: list[ToastButton] | None = None,
-                on_activated: Callable[[str], None] | None = None,
-                duration: ToastDuration = ToastDuration.Default) -> None:
+def _show_toast(
+    title: str,
+    message: str,
+    buttons: list[ToastButton] | None = None,
+    on_activated: Callable[[str], None] | None = None,
+    duration: ToastDuration = ToastDuration.Default,
+) -> None:
     """在后台线程发送系统通知。"""
+
     def _activated_handler(args: ToastActivatedEventArgs) -> None:
         if on_activated and args.arguments:
             on_activated(args.arguments)
@@ -51,6 +56,7 @@ def show_reminder_notification(
             ToastButton("💧 500ml", "water_500"),
             ToastButton("⏰ 稍后", "snooze"),
         ]
+
         def _handle(action: str) -> None:
             if action == "water_250" and on_water:
                 on_water(250)
@@ -58,15 +64,18 @@ def show_reminder_notification(
                 on_water(500)
             elif action == "snooze" and on_snooze:
                 on_snooze()
+
         on_activated = _handle
     elif event.kind == "sedentary":
         buttons = [
             ToastButton("✅ 我起来了", "stand_ok"),
             ToastButton("⏰ 稍后", "snooze"),
         ]
+
         def _handle(action: str) -> None:
             if action == "snooze" and on_snooze:
                 on_snooze()
+
         on_activated = _handle
 
     thread = threading.Thread(

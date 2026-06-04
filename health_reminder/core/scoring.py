@@ -3,6 +3,7 @@
 Five dimensions weighted for chronic prostatitis management:
   water(25%) + stand(25%) + toilet(20%) + sit_streak(20%) + smoke(10%) = 100
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from typing import Any
 @dataclass(frozen=True)
 class ScoreBreakdown:
     """评分细分结果，包含各维度得分、总分、等级和标签。"""
+
     total: int
     grade: str
     label: str
@@ -71,7 +73,7 @@ _GRADES = [
     (75, "B", "不错，有改善空间"),
     (60, "C", "注意！有风险行为"),
     (40, "D", "今天伤害了不少，明天调整"),
-    (0,  "E", "高危日，建议复盘具体原因"),
+    (0, "E", "高危日，建议复盘具体原因"),
 ]
 
 
@@ -173,7 +175,12 @@ def calculate_score(day: dict[str, Any]) -> ScoreBreakdown:
     grade, label = _grade(total)
 
     return ScoreBreakdown(
-        total=total, grade=grade, label=label,
-        water=s_water, stand=s_stand, toilet=s_toilet,
-        sit_streak=s_sit, smoke=s_smoke,
+        total=total,
+        grade=grade,
+        label=label,
+        water=s_water,
+        stand=s_stand,
+        toilet=s_toilet,
+        sit_streak=s_sit,
+        smoke=s_smoke,
     )

@@ -10,7 +10,9 @@ class ConfigStoreTest(unittest.TestCase):
     def test_load_merges_defaults(self):
         with TemporaryDirectory() as temp:
             paths = DataPaths(Path(temp))
-            paths.config.write_text('{"reminders": {"water_interval_minutes": 30}}', encoding="utf-8")
+            paths.config.write_text(
+                '{"reminders": {"water_interval_minutes": 30}}', encoding="utf-8"
+            )
             config = ConfigStore(paths).load()
             self.assertEqual(config["reminders"]["water_interval_minutes"], 30)
             self.assertEqual(config["reminders"]["sedentary_interval_minutes"], 45)

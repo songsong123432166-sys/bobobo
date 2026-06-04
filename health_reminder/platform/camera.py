@@ -1,5 +1,6 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """摄像头人体检测器，YuNet + Haar + HOG 三级协同检测。"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from ..core.paths import resource_path
 @dataclass
 class CameraResult:
     """检测结果：是否可用、是否有人、详细信息。"""
+
     available: bool
     person_present: bool | None
     message: str
@@ -26,8 +28,7 @@ class CameraPresenceDetector:
     3. HOG 人体轮廓检测 — 兜底，仅在前两者都失败时使用
     """
 
-    def __init__(self, camera_index: int = 0, sample_frames: int = 5,
-                 max_width: int = 800) -> None:
+    def __init__(self, camera_index: int = 0, sample_frames: int = 5, max_width: int = 800) -> None:
         self.camera_index = camera_index
         self.sample_frames = max(1, sample_frames)
         self.max_width = max(160, max_width)
@@ -44,6 +45,7 @@ class CameraPresenceDetector:
         """加载 OpenCV 及所有检测模型。"""
         try:
             import cv2
+
             self._cv2 = cv2
             self._load_yunet()
             self._load_hog()
@@ -61,9 +63,10 @@ class CameraPresenceDetector:
         safe_path = self._opencv_safe_path(model_path)
         try:
             self._yunet = self._cv2.FaceDetectorYN.create(
-                str(safe_path), "",
+                str(safe_path),
+                "",
                 (self.max_width, 480),
-                score_threshold=0.6,   # 高阈值，减少误判
+                score_threshold=0.6,  # 高阈值，减少误判
                 nms_threshold=0.3,
                 top_k=3000,
             )
@@ -96,8 +99,7 @@ class CameraPresenceDetector:
                 self._cascades.append((name, cascade))
         if not self._cascades:
             self._load_error = (
-                f"face cascades failed to load: "
-                f"{Path(self._cv2.data.haarcascades)}"
+                f"face cascades failed to load: " f"{Path(self._cv2.data.haarcascades)}"
             )
 
     def _load_single_cascade(self, cascade_path: Path):
@@ -131,8 +133,7 @@ class CameraPresenceDetector:
                 folder.mkdir(parents=True, exist_ok=True)
                 target = folder / model_path.name
                 need_copy = (
-                    not target.exists()
-                    or target.stat().st_size != model_path.stat().st_size
+                    not target.exists() or target.stat().st_size != model_path.stat().st_size
                 )
                 if need_copy:
                     copyfile(model_path, target)
@@ -146,13 +147,13 @@ class CameraPresenceDetector:
 
     def check(self) -> CameraResult:
         """执行一次摄像头检测，返回是否有人。"""
-        no_detector = (
-            self._cv2 is None
-            or (self._yunet is None and not self._cascades and self._hog is None)
+        no_detector = self._cv2 is None or (
+            self._yunet is None and not self._cascades and self._hog is None
         )
         if no_detector:
             return CameraResult(
-                False, None,
+                False,
+                None,
                 f"OpenCV unavailable: {self._load_error or 'not installed'}",
             )
 
@@ -172,7 +173,8 @@ class CameraPresenceDetector:
                 count, name = self._detect_person(frame)
                 if count > 0:
                     return CameraResult(
-                        True, True,
+                        True,
+                        True,
                         f"{name} detections={count} frames={frames_checked}",
                     )
 
@@ -271,6 +273,10 @@ class CameraPresenceDetector:
         resized = self._cv2.resize(resized, (w, h))
         # OpenCV 4.10+ 的 finalThreshold 必须用位置参数
         bodies, _weights = self._hog.detectMultiScale(
-            resized, (8, 8), (8, 8), 1.05, 2,
+            resized,
+            (8, 8),
+            (8, 8),
+            1.05,
+            2,
         )
         return len(bodies)

@@ -48,9 +48,7 @@ def sf(value: float) -> float:
     return value
 
 
-def font(family: str = "Microsoft YaHei UI",
-         size: int = 10,
-         *styles: str) -> tuple:
+def font(family: str = "Microsoft YaHei UI", size: int = 10, *styles: str) -> tuple:
     """生成缩放后的字体元组，字体自动放大加粗。
 
     用法: font("Microsoft YaHei UI", 14, "bold")

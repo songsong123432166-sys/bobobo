@@ -13,6 +13,8 @@ def create_tray_icon(size: int = 64) -> Image.Image:
     eye_r = max(2, size // 13)
     eye_x = int(size * 0.55)
     eye_y = int(size * 0.28)
-    draw.ellipse([eye_x - eye_r, eye_y - eye_r, eye_x + eye_r, eye_y + eye_r], fill=(40, 40, 45, 255))
+    draw.ellipse(
+        [eye_x - eye_r, eye_y - eye_r, eye_x + eye_r, eye_y + eye_r], fill=(40, 40, 45, 255)
+    )
     draw.arc(body, start=32, end=328, fill=(235, 170, 10, 255), width=max(2, size // 18))
     return image

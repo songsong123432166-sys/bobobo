@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
@@ -6,7 +6,6 @@ from typing import Any
 
 from .paths import DataPaths
 from .storage import deep_merge, read_json, write_json
-
 
 DEFAULT_CONFIG: dict[str, Any] = {
     "version": "v2.8.1",
@@ -59,6 +58,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
 @dataclass
 class ConfigStore:
     """配置文件存储类，自动处理默认值合并和JSON读写。"""
+
     paths: DataPaths
 
     def load(self) -> dict[str, Any]:

@@ -1,4 +1,5 @@
-﻿"""UI组件测试，覆盖页面切换、数据刷新和评分显示。"""
+"""UI组件测试，覆盖页面切换、数据刷新和评分显示。"""
+
 from __future__ import annotations
 
 import tkinter as tk
@@ -37,13 +38,12 @@ class MainWindowTest(unittest.TestCase):
         self.paths = DataPaths(Path(self._temp.name))
         self.config_store = ConfigStore(self.paths)
         self.logger = EventLogger(self.paths.log)
-        self.state = HealthStateStore(
-            self.paths.health_score, self.paths.away_reason
-        )
+        self.state = HealthStateStore(self.paths.health_score, self.paths.away_reason)
         self.get_remaining = lambda: (600, 1200)
         self.on_save = lambda cfg: None
 
         from health_reminder.ui.main_window import MainWindow
+
         self.win = MainWindow(
             self.root,
             self.config_store,
@@ -163,13 +163,16 @@ class ScoreDisplayTest(unittest.TestCase):
         self.paths = DataPaths(Path(self._temp.name))
         self.config_store = ConfigStore(self.paths)
         self.logger = EventLogger(self.paths.log)
-        self.state = HealthStateStore(
-            self.paths.health_score, self.paths.away_reason
-        )
+        self.state = HealthStateStore(self.paths.health_score, self.paths.away_reason)
         from health_reminder.ui.main_window import MainWindow
+
         self.win = MainWindow(
-            self.root, self.config_store, self.state, self.logger,
-            lambda: (600, 1200), lambda cfg: None,
+            self.root,
+            self.config_store,
+            self.state,
+            self.logger,
+            lambda: (600, 1200),
+            lambda cfg: None,
             on_test_sound=lambda: None,
             on_test_camera=lambda: "ok",
             on_test_popup=lambda: None,

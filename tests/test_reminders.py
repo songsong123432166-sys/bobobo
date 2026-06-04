@@ -117,7 +117,11 @@ class ReminderDecisionEngineTest(unittest.TestCase):
     def test_sedentary_tick_starts_stand_watch(self):
         base = datetime(2026, 5, 29, 8, 0)
         config = DEFAULT_CONFIG.copy()
-        config["reminders"] = {**config["reminders"], "sedentary_interval_minutes": 1, "water_interval_minutes": 120}
+        config["reminders"] = {
+            **config["reminders"],
+            "sedentary_interval_minutes": 1,
+            "water_interval_minutes": 120,
+        }
         config["detection"] = {**config["detection"], "privacy_mode": True}
 
         with TemporaryDirectory() as temp:
@@ -139,8 +143,16 @@ class ReminderDecisionEngineTest(unittest.TestCase):
         self.assertTrue(AppController._should_count_away_as_stand(fake, "上厕所", context))
         self.assertFalse(AppController._should_count_away_as_stand(fake, "抽根烟", context))
         self.assertFalse(AppController._should_count_away_as_stand(fake, "未记录", context))
-        self.assertFalse(AppController._should_count_away_as_stand(fake, "上厕所", {**context, "duration_seconds": 1800}))
-        self.assertFalse(AppController._should_count_away_as_stand(fake, "上厕所", {**context, "stand_counted": True}))
+        self.assertFalse(
+            AppController._should_count_away_as_stand(
+                fake, "上厕所", {**context, "duration_seconds": 1800}
+            )
+        )
+        self.assertFalse(
+            AppController._should_count_away_as_stand(
+                fake, "上厕所", {**context, "stand_counted": True}
+            )
+        )
 
     def test_privacy_mode_skips_camera_diagnostic(self):
         config = DEFAULT_CONFIG.copy()

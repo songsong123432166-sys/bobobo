@@ -1,4 +1,4 @@
-﻿"""Sound playback for reminder alerts."""
+"""Sound playback for reminder alerts."""
 
 from __future__ import annotations
 
@@ -10,7 +10,6 @@ from pathlib import Path
 from shutil import copyfile
 
 from ..core.paths import resource_path
-
 
 _RIBBIT_PATH = resource_path("assets/ribbit.wav")
 _CACHE_DIR = Path(tempfile.gettempdir()) / "HealthTrayReminder" / "sounds"
@@ -91,7 +90,9 @@ def _scale_pcm(frames: bytes, sample_width: int, factor: float) -> bytes:
     limit = 2 ** (sample_width * 8 - 1)
     output = bytearray(len(frames))
     for index in range(0, len(frames), sample_width):
-        sample = int.from_bytes(frames[index:index + sample_width], "little", signed=True)
+        sample = int.from_bytes(frames[index : index + sample_width], "little", signed=True)
         scaled = max(-limit, min(limit - 1, round(sample * factor)))
-        output[index:index + sample_width] = int(scaled).to_bytes(sample_width, "little", signed=True)
+        output[index : index + sample_width] = int(scaled).to_bytes(
+            sample_width, "little", signed=True
+        )
     return bytes(output)

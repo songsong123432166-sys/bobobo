@@ -6,13 +6,13 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-
 APP_DIR_NAME = "HealthTrayReminder"
 
 
 @dataclass(frozen=True)
 class DataPaths:
     """数据路径容器，统一管理程序所需的各类文件路径。"""
+
     root: Path
     degraded: bool = False
     error: str | None = None

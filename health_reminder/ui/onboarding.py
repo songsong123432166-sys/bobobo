@@ -1,5 +1,6 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """首次启动引导向导，帮助用户快速完成基础设置。"""
+
 from __future__ import annotations
 
 import tkinter as tk
@@ -44,14 +45,22 @@ class OnboardingWizard(ctk.CTkToplevel):
         # ── 控件引用（各页填写后回读） ──
         self._work_start_var = tk.StringVar(value=config.get("work_time", {}).get("start", "08:30"))
         self._work_end_var = tk.StringVar(value=config.get("work_time", {}).get("end", "17:00"))
-        self._dnd_enabled_var = tk.BooleanVar(value=config.get("do_not_disturb", {}).get("enabled", False))
-        self._dnd_start_var = tk.StringVar(value=config.get("do_not_disturb", {}).get("start", "12:00"))
+        self._dnd_enabled_var = tk.BooleanVar(
+            value=config.get("do_not_disturb", {}).get("enabled", False)
+        )
+        self._dnd_start_var = tk.StringVar(
+            value=config.get("do_not_disturb", {}).get("start", "12:00")
+        )
         self._dnd_end_var = tk.StringVar(value=config.get("do_not_disturb", {}).get("end", "13:00"))
         self._detection_mode = tk.StringVar(value="recommended")
         self._mode_cards: dict[str, tk.Frame] = {}
         self._mode_indicators: dict[str, tk.Label] = {}
-        self._sedentary_var = tk.IntVar(value=config.get("reminders", {}).get("sedentary_interval_minutes", 45))
-        self._water_var = tk.IntVar(value=config.get("reminders", {}).get("water_interval_minutes", 60))
+        self._sedentary_var = tk.IntVar(
+            value=config.get("reminders", {}).get("sedentary_interval_minutes", 45)
+        )
+        self._water_var = tk.IntVar(
+            value=config.get("reminders", {}).get("water_interval_minutes", 60)
+        )
         self._sound_var = tk.BooleanVar(value=True)
         self._volume_var = tk.IntVar(value=config.get("system", {}).get("sound_volume_percent", 80))
         self._popup_retention_var = tk.IntVar(
@@ -81,20 +90,39 @@ class OnboardingWizard(ctk.CTkToplevel):
         btn_bar = tk.Frame(self, bg=BG, height=42)
         btn_bar.pack(fill="x", side="bottom", padx=40, pady=(12, 24))
         btn_bar.pack_propagate(False)
-        self._btn_prev = ctk.CTkButton(btn_bar, text="上一步", width=100,
-                                        command=self._prev_page, fg_color=LINE, text_color=TEXT,
-                                        hover_color="#d1d5db", font=scaling.font("Microsoft YaHei UI", 11))
+        self._btn_prev = ctk.CTkButton(
+            btn_bar,
+            text="上一步",
+            width=100,
+            command=self._prev_page,
+            fg_color=LINE,
+            text_color=TEXT,
+            hover_color="#d1d5db",
+            font=scaling.font("Microsoft YaHei UI", 11),
+        )
         self._btn_prev.pack(side="left")
-        self._btn_skip = ctk.CTkButton(btn_bar, text="跳过", width=80,
-                                        command=self._on_skip, fg_color="transparent", text_color=MUTED,
-                                        hover_color="#e5e7eb", font=scaling.font("Microsoft YaHei UI", 10))
+        self._btn_skip = ctk.CTkButton(
+            btn_bar,
+            text="跳过",
+            width=80,
+            command=self._on_skip,
+            fg_color="transparent",
+            text_color=MUTED,
+            hover_color="#e5e7eb",
+            font=scaling.font("Microsoft YaHei UI", 10),
+        )
         self._btn_skip.pack(side="left", padx=(12, 0))
-        self._btn_next = ctk.CTkButton(btn_bar, text="确定", width=110,
-                                        command=self._next_page, fg_color=BLUE, text_color="white",
-                                        hover_color="#1a6dd4", font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        self._btn_next = ctk.CTkButton(
+            btn_bar,
+            text="确定",
+            width=110,
+            command=self._next_page,
+            fg_color=BLUE,
+            text_color="white",
+            hover_color="#1a6dd4",
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        )
         self._btn_next.pack(side="right")
-
-
 
         self.grab_set()
         self.bind("<Escape>", lambda _e: self._on_skip())
@@ -126,7 +154,9 @@ class OnboardingWizard(ctk.CTkToplevel):
 
         # 按钮状态
         self._btn_prev.configure(state="normal" if self._page_index > 0 else "disabled")
-        self._btn_skip.configure(state="disabled" if self._page_index == self.TOTAL_PAGES - 1 else "normal")
+        self._btn_skip.configure(
+            state="disabled" if self._page_index == self.TOTAL_PAGES - 1 else "normal"
+        )
         self._btn_next.configure(text="确定", width=110)
 
     def _next_page(self) -> None:
@@ -153,14 +183,34 @@ class OnboardingWizard(ctk.CTkToplevel):
         frame.pack(fill="both", expand=True)
 
         tk.Label(frame, text="🏥", font=("Segoe UI Emoji", 56), bg=BG).pack(pady=(32, 12))
-        tk.Label(frame, text="欢迎使用健康提醒助手", bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 20, "bold")).pack()
-        tk.Label(frame, text="帮你管理久坐、喝水和前列腺健康的桌面小工具", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 12)).pack(pady=(8, 0))
-        tk.Label(frame, text="它会安静地待在系统托盘里，在合适的时候提醒你起身和喝水。",
-                 bg=BG, fg=MUTED, font=scaling.font("Microsoft YaHei UI", 11)).pack(pady=(4, 0))
-        tk.Label(frame, text="接下来只需 1 分钟完成基础设置", bg=BG, fg=BLUE,
-                 font=scaling.font("Microsoft YaHei UI", 11, "bold")).pack(pady=(20, 0))
+        tk.Label(
+            frame,
+            text="欢迎使用健康提醒助手",
+            bg=BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 20, "bold"),
+        ).pack()
+        tk.Label(
+            frame,
+            text="帮你管理久坐、喝水和前列腺健康的桌面小工具",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 12),
+        ).pack(pady=(8, 0))
+        tk.Label(
+            frame,
+            text="它会安静地待在系统托盘里，在合适的时候提醒你起身和喝水。",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(pady=(4, 0))
+        tk.Label(
+            frame,
+            text="接下来只需 1 分钟完成基础设置",
+            bg=BG,
+            fg=BLUE,
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        ).pack(pady=(20, 0))
 
     # ══════════════════════════════════════
     # 第 2 页：工作时间
@@ -170,41 +220,79 @@ class OnboardingWizard(ctk.CTkToplevel):
         frame = tk.Frame(self._content, bg=BG)
         frame.pack(fill="both", expand=True)
 
-        tk.Label(frame, text="⏰  工作时间", bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 16, "bold")).pack(anchor="w", pady=(8, 4))
-        tk.Label(frame, text="设置你的工作时间段，程序会在这段时间内主动提醒你。", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(anchor="w", pady=(0, 16))
+        tk.Label(
+            frame,
+            text="⏰  工作时间",
+            bg=BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 16, "bold"),
+        ).pack(anchor="w", pady=(8, 4))
+        tk.Label(
+            frame,
+            text="设置你的工作时间段，程序会在这段时间内主动提醒你。",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(anchor="w", pady=(0, 16))
 
         card = self._card(frame)
         # 上班 / 下班
         row1 = tk.Frame(card, bg=CARD_BG)
         row1.pack(fill="x", padx=20, pady=(16, 8))
-        tk.Label(row1, text="上班时间", bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
-        ctk.CTkEntry(row1, textvariable=self._work_start_var, width=90,
-                      font=scaling.font("Microsoft YaHei UI", 12)).pack(side="right")
+        tk.Label(
+            row1, text="上班时间", bg=CARD_BG, fg=TEXT, font=scaling.font("Microsoft YaHei UI", 11)
+        ).pack(side="left")
+        ctk.CTkEntry(
+            row1,
+            textvariable=self._work_start_var,
+            width=90,
+            font=scaling.font("Microsoft YaHei UI", 12),
+        ).pack(side="right")
 
         row2 = tk.Frame(card, bg=CARD_BG)
         row2.pack(fill="x", padx=20, pady=(0, 8))
-        tk.Label(row2, text="下班时间", bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
-        ctk.CTkEntry(row2, textvariable=self._work_end_var, width=90,
-                      font=scaling.font("Microsoft YaHei UI", 12)).pack(side="right")
+        tk.Label(
+            row2, text="下班时间", bg=CARD_BG, fg=TEXT, font=scaling.font("Microsoft YaHei UI", 11)
+        ).pack(side="left")
+        ctk.CTkEntry(
+            row2,
+            textvariable=self._work_end_var,
+            width=90,
+            font=scaling.font("Microsoft YaHei UI", 12),
+        ).pack(side="right")
 
         # 午休免打扰
         row3 = tk.Frame(card, bg=CARD_BG)
         row3.pack(fill="x", padx=20, pady=(8, 16))
-        ctk.CTkSwitch(row3, text="午休免打扰", variable=self._dnd_enabled_var,
-                       font=scaling.font("Microsoft YaHei UI", 11),
-                       fg_color="#d1d5db", progress_color=BLUE).pack(side="left")
-        ctk.CTkEntry(row3, textvariable=self._dnd_start_var, width=70,
-                      font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left", padx=(16, 4))
+        ctk.CTkSwitch(
+            row3,
+            text="午休免打扰",
+            variable=self._dnd_enabled_var,
+            font=scaling.font("Microsoft YaHei UI", 11),
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+        ).pack(side="left")
+        ctk.CTkEntry(
+            row3,
+            textvariable=self._dnd_start_var,
+            width=70,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(side="left", padx=(16, 4))
         tk.Label(row3, text="—", bg=CARD_BG, fg=MUTED).pack(side="left")
-        ctk.CTkEntry(row3, textvariable=self._dnd_end_var, width=70,
-                      font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left", padx=(4, 0))
+        ctk.CTkEntry(
+            row3,
+            textvariable=self._dnd_end_var,
+            width=70,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(side="left", padx=(4, 0))
 
-        tk.Label(frame, text="💡 下班后和午休时间不会弹出提醒", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", pady=(8, 0))
+        tk.Label(
+            frame,
+            text="💡 下班后和午休时间不会弹出提醒",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 9),
+        ).pack(anchor="w", pady=(8, 0))
 
     # ══════════════════════════════════════
     # 第 3 页：检测模式
@@ -216,29 +304,61 @@ class OnboardingWizard(ctk.CTkToplevel):
         self._mode_cards = {}
         self._mode_indicators = {}
 
-        tk.Label(frame, text="🔍  检测模式", bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 16, "bold")).pack(anchor="w", pady=(8, 4))
-        tk.Label(frame, text="选择程序如何判断你是否在电脑前：", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(anchor="w", pady=(0, 12))
+        tk.Label(
+            frame,
+            text="🔍  检测模式",
+            bg=BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 16, "bold"),
+        ).pack(anchor="w", pady=(8, 4))
+        tk.Label(
+            frame,
+            text="选择程序如何判断你是否在电脑前：",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(anchor="w", pady=(0, 12))
 
         modes = [
-            ("recommended", "🎥  推荐模式", "键盘鼠标 + 摄像头联合检测",
-             "最准确，能自动确认起身。摄像头仅在空闲时短暂开启，不保存画面。"),
-            ("lightweight", "⌨️  轻量模式", "仅通过键盘鼠标判断",
-             "不使用摄像头，起身判断需手动确认。适合无摄像头的用户。"),
-            ("privacy", "🔒  隐私模式", "仅键盘鼠标，强化隐私保护",
-             "关闭摄像头和中央弹窗，对隐私极度敏感的用户适用。"),
+            (
+                "recommended",
+                "🎥  推荐模式",
+                "键盘鼠标 + 摄像头联合检测",
+                "最准确，能自动确认起身。摄像头仅在空闲时短暂开启，不保存画面。",
+            ),
+            (
+                "lightweight",
+                "⌨️  轻量模式",
+                "仅通过键盘鼠标判断",
+                "不使用摄像头，起身判断需手动确认。适合无摄像头的用户。",
+            ),
+            (
+                "privacy",
+                "🔒  隐私模式",
+                "仅键盘鼠标，强化隐私保护",
+                "关闭摄像头和中央弹窗，对隐私极度敏感的用户适用。",
+            ),
         ]
         for value, title, subtitle, desc in modes:
             self._mode_card(frame, value, title, subtitle, desc)
 
-        tk.Label(frame, text="💡 你随时可以在设置里切换模式", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", pady=(8, 0))
+        tk.Label(
+            frame,
+            text="💡 你随时可以在设置里切换模式",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 9),
+        ).pack(anchor="w", pady=(8, 0))
 
     def _mode_card(self, parent, value, title, subtitle, desc) -> None:
         border_color = BLUE if self._detection_mode.get() == value else LINE
-        card = tk.Frame(parent, bg=CARD_BG, highlightbackground=border_color,
-                        highlightthickness=2, highlightcolor=border_color)
+        card = tk.Frame(
+            parent,
+            bg=CARD_BG,
+            highlightbackground=border_color,
+            highlightthickness=2,
+            highlightcolor=border_color,
+        )
         card.pack(fill="x", pady=(0, 8))
 
         self._mode_cards[value] = card
@@ -248,18 +368,35 @@ class OnboardingWizard(ctk.CTkToplevel):
 
         title_row = tk.Frame(inner, bg=CARD_BG)
         title_row.pack(fill="x")
-        indicator = tk.Label(title_row, text="●" if self._detection_mode.get() == value else "○",
-                             bg=CARD_BG, fg=BLUE if self._detection_mode.get() == value else MUTED,
-                             font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        indicator = tk.Label(
+            title_row,
+            text="●" if self._detection_mode.get() == value else "○",
+            bg=CARD_BG,
+            fg=BLUE if self._detection_mode.get() == value else MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        )
         indicator.pack(side="left", padx=(0, 8))
         self._mode_indicators[value] = indicator
-        tk.Label(title_row, text=title, bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(side="left")
-        sub = tk.Label(inner, text=subtitle, bg=CARD_BG, fg=BLUE,
-                       font=scaling.font("Microsoft YaHei UI", 10))
+        tk.Label(
+            title_row,
+            text=title,
+            bg=CARD_BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 12, "bold"),
+        ).pack(side="left")
+        sub = tk.Label(
+            inner, text=subtitle, bg=CARD_BG, fg=BLUE, font=scaling.font("Microsoft YaHei UI", 10)
+        )
         sub.pack(anchor="w", pady=(2, 0))
-        desc_label = tk.Label(inner, text=desc, bg=CARD_BG, fg=MUTED,
-                              font=scaling.font("Microsoft YaHei UI", 9), wraplength=480, justify="left")
+        desc_label = tk.Label(
+            inner,
+            text=desc,
+            bg=CARD_BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 9),
+            wraplength=480,
+            justify="left",
+        )
         desc_label.pack(anchor="w", pady=(2, 0))
         self._bind_click_tree(card, lambda _e=None, v=value: self._select_detection_mode(v))
 
@@ -288,46 +425,99 @@ class OnboardingWizard(ctk.CTkToplevel):
         frame = tk.Frame(self._content, bg=BG)
         frame.pack(fill="both", expand=True)
 
-        tk.Label(frame, text="🔔  提醒方式", bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 16, "bold")).pack(anchor="w", pady=(8, 4))
-        tk.Label(frame, text="调整提醒间隔，找到适合你的节奏。", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(anchor="w", pady=(0, 16))
+        tk.Label(
+            frame,
+            text="🔔  提醒方式",
+            bg=BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 16, "bold"),
+        ).pack(anchor="w", pady=(8, 4))
+        tk.Label(
+            frame,
+            text="调整提醒间隔，找到适合你的节奏。",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(anchor="w", pady=(0, 16))
 
         card = self._card(frame)
 
         # 久坐间隔
         r1 = tk.Frame(card, bg=CARD_BG)
         r1.pack(fill="x", padx=20, pady=(16, 8))
-        tk.Label(r1, text="久坐提醒间隔", bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
-        self._sedentary_label = tk.Label(r1, text=f"{self._sedentary_var.get()} 分钟",
-                                          bg=CARD_BG, fg=BLUE, font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        tk.Label(
+            r1,
+            text="久坐提醒间隔",
+            bg=CARD_BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(side="left")
+        self._sedentary_label = tk.Label(
+            r1,
+            text=f"{self._sedentary_var.get()} 分钟",
+            bg=CARD_BG,
+            fg=BLUE,
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        )
         self._sedentary_label.pack(side="right")
-        s1 = ctk.CTkSlider(r1, from_=15, to=120, number_of_steps=21,
-                            variable=self._sedentary_var, command=self._update_sedentary_label,
-                            fg_color="#d1d5db", progress_color=BLUE, button_color=BLUE,
-                            button_hover_color="#1a6dd4", width=220)
+        s1 = ctk.CTkSlider(
+            r1,
+            from_=15,
+            to=120,
+            number_of_steps=21,
+            variable=self._sedentary_var,
+            command=self._update_sedentary_label,
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+            button_color=BLUE,
+            button_hover_color="#1a6dd4",
+            width=220,
+        )
         s1.pack(side="right", padx=(12, 12))
 
         # 喝水间隔
         r2 = tk.Frame(card, bg=CARD_BG)
         r2.pack(fill="x", padx=20, pady=(0, 8))
-        tk.Label(r2, text="喝水提醒间隔", bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
-        self._water_label = tk.Label(r2, text=f"{self._water_var.get()} 分钟",
-                                      bg=CARD_BG, fg=BLUE, font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        tk.Label(
+            r2,
+            text="喝水提醒间隔",
+            bg=CARD_BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(side="left")
+        self._water_label = tk.Label(
+            r2,
+            text=f"{self._water_var.get()} 分钟",
+            bg=CARD_BG,
+            fg=BLUE,
+            font=scaling.font("Microsoft YaHei UI", 11, "bold"),
+        )
         self._water_label.pack(side="right")
-        s2 = ctk.CTkSlider(r2, from_=15, to=120, number_of_steps=21,
-                            variable=self._water_var, command=self._update_water_label,
-                            fg_color="#d1d5db", progress_color=BLUE, button_color=BLUE,
-                            button_hover_color="#1a6dd4", width=220)
+        s2 = ctk.CTkSlider(
+            r2,
+            from_=15,
+            to=120,
+            number_of_steps=21,
+            variable=self._water_var,
+            command=self._update_water_label,
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+            button_color=BLUE,
+            button_hover_color="#1a6dd4",
+            width=220,
+        )
         s2.pack(side="right", padx=(12, 12))
 
         # 弹窗留存时长
         r3 = tk.Frame(card, bg=CARD_BG)
         r3.pack(fill="x", padx=20, pady=(0, 8))
-        tk.Label(r3, text="弹窗留存时长", bg=CARD_BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(side="left")
+        tk.Label(
+            r3,
+            text="弹窗留存时长",
+            bg=CARD_BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(side="left")
         self._popup_retention_label = tk.Label(
             r3,
             text=self._format_popup_retention(self._popup_retention_var.get()),
@@ -336,24 +526,50 @@ class OnboardingWizard(ctk.CTkToplevel):
             font=scaling.font("Microsoft YaHei UI", 11, "bold"),
         )
         self._popup_retention_label.pack(side="right")
-        s3 = ctk.CTkSlider(r3, from_=10, to=600, number_of_steps=59,
-                            variable=self._popup_retention_var, command=self._update_popup_retention_label,
-                            fg_color="#d1d5db", progress_color=BLUE, button_color=BLUE,
-                            button_hover_color="#1a6dd4", width=220)
+        s3 = ctk.CTkSlider(
+            r3,
+            from_=10,
+            to=600,
+            number_of_steps=59,
+            variable=self._popup_retention_var,
+            command=self._update_popup_retention_label,
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+            button_color=BLUE,
+            button_hover_color="#1a6dd4",
+            width=220,
+        )
         s3.pack(side="right", padx=(12, 12))
 
         # 提示音
         r4 = tk.Frame(card, bg=CARD_BG)
         r4.pack(fill="x", padx=20, pady=(8, 16))
-        ctk.CTkSwitch(r4, text="提示音", variable=self._sound_var,
-                       font=scaling.font("Microsoft YaHei UI", 11),
-                       fg_color="#d1d5db", progress_color=BLUE).pack(side="left")
-        ctk.CTkButton(r4, text="🔊 试听", width=70, fg_color=GREEN, text_color="white",
-                       hover_color="#2d9348", font=scaling.font("Microsoft YaHei UI", 10),
-                       command=self._test_sound).pack(side="right")
+        ctk.CTkSwitch(
+            r4,
+            text="提示音",
+            variable=self._sound_var,
+            font=scaling.font("Microsoft YaHei UI", 11),
+            fg_color="#d1d5db",
+            progress_color=BLUE,
+        ).pack(side="left")
+        ctk.CTkButton(
+            r4,
+            text="🔊 试听",
+            width=70,
+            fg_color=GREEN,
+            text_color="white",
+            hover_color="#2d9348",
+            font=scaling.font("Microsoft YaHei UI", 10),
+            command=self._test_sound,
+        ).pack(side="right")
 
-        tk.Label(frame, text="💡 弹窗留存时长可之后在设置页继续调整", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 9)).pack(anchor="w", pady=(8, 0))
+        tk.Label(
+            frame,
+            text="💡 弹窗留存时长可之后在设置页继续调整",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 9),
+        ).pack(anchor="w", pady=(8, 0))
 
     def _update_sedentary_label(self, val) -> None:
         self._sedentary_label.configure(text=f"{int(float(val))} 分钟")
@@ -374,6 +590,7 @@ class OnboardingWizard(ctk.CTkToplevel):
 
     def _test_sound(self) -> None:
         from ..platform.sound import play_ribbit
+
         play_ribbit(self._volume_var.get())
 
     # ══════════════════════════════════════
@@ -385,10 +602,20 @@ class OnboardingWizard(ctk.CTkToplevel):
         frame.pack(fill="both", expand=True)
 
         tk.Label(frame, text="✅", font=("Segoe UI Emoji", 48), bg=BG).pack(pady=(24, 8))
-        tk.Label(frame, text="设置完成！", bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 18, "bold")).pack()
-        tk.Label(frame, text="程序已最小化到系统托盘（屏幕右下角小箭头里）", bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 11)).pack(pady=(4, 16))
+        tk.Label(
+            frame,
+            text="设置完成！",
+            bg=BG,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 18, "bold"),
+        ).pack()
+        tk.Label(
+            frame,
+            text="程序已最小化到系统托盘（屏幕右下角小箭头里）",
+            bg=BG,
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 11),
+        ).pack(pady=(4, 16))
 
         tips_frame = tk.Frame(frame, bg=CARD_BG, highlightbackground=LINE, highlightthickness=1)
         tips_frame.pack(fill="x", padx=40)
@@ -401,13 +628,24 @@ class OnboardingWizard(ctk.CTkToplevel):
         for icon, key, val in tips:
             row = tk.Frame(tips_frame, bg=CARD_BG)
             row.pack(fill="x", padx=16, pady=3)
-            tk.Label(row, text=f"{icon}  {key}", bg=CARD_BG, fg=TEXT,
-                     font=scaling.font("Microsoft YaHei UI", 10)).pack(side="left")
-            tk.Label(row, text=val, bg=CARD_BG, fg=MUTED,
-                     font=scaling.font("Microsoft YaHei UI", 10)).pack(side="right")
+            tk.Label(
+                row,
+                text=f"{icon}  {key}",
+                bg=CARD_BG,
+                fg=TEXT,
+                font=scaling.font("Microsoft YaHei UI", 10),
+            ).pack(side="left")
+            tk.Label(
+                row, text=val, bg=CARD_BG, fg=MUTED, font=scaling.font("Microsoft YaHei UI", 10)
+            ).pack(side="right")
 
-        tk.Label(frame, text="祝你健康！", bg=BG, fg=GREEN,
-                 font=scaling.font("Microsoft YaHei UI", 12, "bold")).pack(pady=(16, 0))
+        tk.Label(
+            frame,
+            text="祝你健康！",
+            bg=BG,
+            fg=GREEN,
+            font=scaling.font("Microsoft YaHei UI", 12, "bold"),
+        ).pack(pady=(16, 0))
 
     # ══════════════════════════════════════
     # 辅助 & 保存
@@ -415,8 +653,9 @@ class OnboardingWizard(ctk.CTkToplevel):
 
     def _card(self, parent) -> tk.Frame:
         """创建白色卡片容器。"""
-        card = tk.Frame(parent, bg=CARD_BG, highlightbackground=LINE,
-                        highlightthickness=1, highlightcolor=LINE)
+        card = tk.Frame(
+            parent, bg=CARD_BG, highlightbackground=LINE, highlightthickness=1, highlightcolor=LINE
+        )
         card.pack(fill="x", pady=(0, 12))
         return card
 

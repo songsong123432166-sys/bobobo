@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
@@ -7,6 +7,7 @@ from threading import Lock
 
 class EventLogger:
     """事件日志记录器，每条日志包含时间戳、事件类型和详情。"""
+
     def __init__(self, path: Path, max_bytes: int = 1_000_000) -> None:
         self.path = path
         self.max_bytes = max_bytes

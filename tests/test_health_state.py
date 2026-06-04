@@ -47,7 +47,9 @@ class HealthStateTest(unittest.TestCase):
 
     def test_increment_today(self):
         with TemporaryDirectory() as temp:
-            store = HealthStateStore(Path(temp) / "health_score.json", Path(temp) / "away_reason.json")
+            store = HealthStateStore(
+                Path(temp) / "health_score.json", Path(temp) / "away_reason.json"
+            )
             store.increment("water_count")
             store.increment("stand_count", 2)
             today = store.today()
@@ -56,7 +58,9 @@ class HealthStateTest(unittest.TestCase):
 
     def test_presence_metrics_are_stored(self):
         with TemporaryDirectory() as temp:
-            store = HealthStateStore(Path(temp) / "health_score.json", Path(temp) / "away_reason.json")
+            store = HealthStateStore(
+                Path(temp) / "health_score.json", Path(temp) / "away_reason.json"
+            )
             store.set_presence("away_short", sedentary_seconds=0)
             today = store.today()
             self.assertEqual(today.presence_status, "away_short")
@@ -64,7 +68,9 @@ class HealthStateTest(unittest.TestCase):
 
     def test_away_reason_does_not_increment_away_count_but_can_count_stand(self):
         with TemporaryDirectory() as temp:
-            store = HealthStateStore(Path(temp) / "health_score.json", Path(temp) / "away_reason.json")
+            store = HealthStateStore(
+                Path(temp) / "health_score.json", Path(temp) / "away_reason.json"
+            )
             store.record_away_reason("上厕所", count_stand=True)
             today = store.today()
             self.assertEqual(today.away_count, 0)

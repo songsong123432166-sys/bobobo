@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import calendar
 import tkinter as tk
@@ -51,6 +51,7 @@ def metric_value(data: dict[str, Any], key: str) -> int:
 
 class ScrollPage:
     """可滚动页面容器，带薄型自动隐藏滚动条。"""
+
     _BAR_W = 6
     _BAR_COLOR = "#c5c9d0"
     _HIDE_DELAY = 1200
@@ -125,6 +126,7 @@ class ScrollPage:
 
 class MainWindow(SettingsPageMixin, CalendarPageMixin):
     """主界面窗口，包含可视化数据、记录日历和设置三个页面。"""
+
     def __init__(
         self,
         root: tk.Tk,
@@ -200,14 +202,23 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
         self._sidebar_icon = self._load_app_icon(44)
         if self._sidebar_icon is not None:
             tk.Label(header, image=self._sidebar_icon, bg=SIDEBAR).pack(side="left", padx=(0, 10))
-        tk.Label(header, text="控制台", bg=SIDEBAR, fg=TEXT,
-                      font=scaling.font("Microsoft YaHei UI", 19, "bold")).pack(side="left")
+        tk.Label(
+            header,
+            text="控制台",
+            bg=SIDEBAR,
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 19, "bold"),
+        ).pack(side="left")
         self._nav_button(nav, "可视化数据", "visual").pack(fill="x", padx=16, pady=5)
         self._nav_button(nav, "记录日历", "calendar").pack(fill="x", padx=16, pady=5)
         self._nav_button(nav, "设置", "settings").pack(fill="x", padx=16, pady=5)
-        tk.Label(nav, text=__version__, bg=SIDEBAR, fg="#9ca3af",
-                     font=scaling.font("Microsoft YaHei UI", 9)).pack(side="bottom",
-            anchor="w", padx=24, pady=22)
+        tk.Label(
+            nav,
+            text=__version__,
+            bg=SIDEBAR,
+            fg="#9ca3af",
+            font=scaling.font("Microsoft YaHei UI", 9),
+        ).pack(side="bottom", anchor="w", padx=24, pady=22)
 
         self.content = tk.Frame(shell, bg=BG)
         self.content.pack(side="left", fill="both", expand=True)
@@ -302,17 +313,24 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
     def _header(self, parent: tk.Misc, title: str, subtitle: str) -> None:
         frame = tk.Frame(parent, bg=BG)
         frame.pack(fill="x", padx=28, pady=(26, 16))
-        tk.Label(frame, text=title, bg=BG, fg=TEXT,
-                 font=scaling.font("Microsoft YaHei UI", 22, "bold")).pack(anchor="w")
-        tk.Label(frame, text=subtitle, bg=BG, fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 10)).pack(anchor="w", pady=(4, 0))
+        tk.Label(
+            frame, text=title, bg=BG, fg=TEXT, font=scaling.font("Microsoft YaHei UI", 22, "bold")
+        ).pack(anchor="w")
+        tk.Label(
+            frame, text=subtitle, bg=BG, fg=MUTED, font=scaling.font("Microsoft YaHei UI", 10)
+        ).pack(anchor="w", pady=(4, 0))
 
     def _card(self, parent: tk.Misc, title: str | None = None) -> tk.Frame:
-        frame = ctk.CTkFrame(parent, corner_radius=16, fg_color="white", border_width=1, border_color="#e0e3e8")
+        frame = ctk.CTkFrame(
+            parent, corner_radius=16, fg_color="white", border_width=1, border_color="#e0e3e8"
+        )
         if title:
-            ctk.CTkLabel(frame, text=title, text_color=TEXT,
-                         font=scaling.font("Microsoft YaHei UI", 14, "bold")).pack(anchor="w",
-                padx=18, pady=(16, 8))
+            ctk.CTkLabel(
+                frame,
+                text=title,
+                text_color=TEXT,
+                font=scaling.font("Microsoft YaHei UI", 14, "bold"),
+            ).pack(anchor="w", padx=18, pady=(16, 8))
         return frame
 
     def _build_visual(self, parent: tk.Frame) -> None:
@@ -329,7 +347,6 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
         self._metric_line(status_card, "久坐剩余时间", "sedentary_left", GREEN)
         self._metric_line(status_card, "喝水剩余时间", "water_left", BLUE)
 
-
         self._metric_line(status_card, "电脑使用时长", "computer_seconds", RED)
         self._daily_metrics(status_card)
 
@@ -342,16 +359,30 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
     def _score_ring(self, parent: tk.Frame) -> None:
         body = tk.Frame(parent, bg="white")
         body.pack(fill="x", padx=28, pady=(20, 16))
-        self._score_num_label = tk.Label(body, text="--", bg="white", fg=TEXT,
-                                          font=scaling.font("Microsoft YaHei UI", 52, "bold"))
+        self._score_num_label = tk.Label(
+            body,
+            text="--",
+            bg="white",
+            fg=TEXT,
+            font=scaling.font("Microsoft YaHei UI", 52, "bold"),
+        )
         self._score_num_label.pack(anchor="center")
-        tk.Label(body, text="健康分", bg="white", fg=MUTED,
-                 font=scaling.font("Microsoft YaHei UI", 13)).pack(anchor="center", pady=(2, 0))
-        self._grade_text_label = tk.Label(body, text="", bg="white", fg=MUTED,
-                                           font=scaling.font("Microsoft YaHei UI", 10))
+        tk.Label(
+            body, text="健康分", bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 13)
+        ).pack(anchor="center", pady=(2, 0))
+        self._grade_text_label = tk.Label(
+            body, text="", bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 10)
+        )
         self._grade_text_label.pack(anchor="center", pady=(4, 0))
-        self._score_tip_label = tk.Label(body, text="", bg="white", fg=MUTED,
-                                         font=scaling.font("Microsoft YaHei UI", 10), wraplength=520, justify="center")
+        self._score_tip_label = tk.Label(
+            body,
+            text="",
+            bg="white",
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 10),
+            wraplength=520,
+            justify="center",
+        )
         self._score_tip_label.pack(anchor="center", pady=(6, 0))
 
     def _status_lights(self, parent: tk.Frame) -> None:
@@ -368,32 +399,38 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
             canvas.pack(side="left")
             canvas.create_oval(3, 3, 15, 15, fill="#d1d5db", outline="", tags=("dot",))
             self._visual_canvases[key] = canvas
-            tk.Label(item, text=label, bg="white", fg=MUTED,
-                          font=scaling.font("Microsoft YaHei UI", 9)).pack(side="left", padx=(5,
-                0))
-
+            tk.Label(
+                item, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)
+            ).pack(side="left", padx=(5, 0))
 
     def _metric_line(self, parent: tk.Frame, label: str, key: str, color: str) -> None:
         row = tk.Frame(parent, bg="white")
         row.pack(fill="x", padx=18, pady=5)
-        tk.Label(row, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)).pack(side="left")
-        value = tk.Label(row, text="", bg="white", fg=color, font=scaling.font("Microsoft YaHei UI", 11, "bold"))
+        tk.Label(
+            row, text=label, bg="white", fg=MUTED, font=scaling.font("Microsoft YaHei UI", 9)
+        ).pack(side="left")
+        value = tk.Label(
+            row, text="", bg="white", fg=color, font=scaling.font("Microsoft YaHei UI", 11, "bold")
+        )
         value.pack(side="right")
         self._visual_labels[key] = value
-
 
     def _today_status(self, parent: tk.Frame) -> None:
         body = tk.Frame(parent, bg="white")
         body.pack(fill="both", expand=True, padx=18, pady=(0, 14))
-        status = tk.Label(body, text="", bg="white", fg=MUTED,
-                          font=scaling.font("Microsoft YaHei UI", 10), wraplength=320,
-            justify="left")
+        status = tk.Label(
+            body,
+            text="",
+            bg="white",
+            fg=MUTED,
+            font=scaling.font("Microsoft YaHei UI", 10),
+            wraplength=320,
+            justify="left",
+        )
         status.pack(anchor="w", pady=(8, 18))
         self._visual_labels["last_status"] = status
         self._metric_line(body, "运行时长", "run_seconds", BLUE)
         self._metric_line(body, "统计日期", "date", GREEN)
-
-
 
     def _update_visual_values(self) -> None:
         stats = self.state.today()
@@ -407,8 +444,6 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
             "sedentary_seconds": format_duration(stats.sedentary_seconds),
             "sedentary_left": format_duration(sedentary_left),
             "water_left": format_duration(water_left),
-
-
             "computer_seconds": format_duration(stats.computer_seconds),
             "toilet_count": f"{stats.toilet_count} 次",
             "smoke_count": f"{stats.smoke_count} 次",
@@ -439,4 +474,3 @@ class MainWindow(SettingsPageMixin, CalendarPageMixin):
         canvas = self._visual_canvases.get(key)
         if canvas is not None:
             canvas.itemconfigure("dot", fill=color if active else "#d1d5db")
-
