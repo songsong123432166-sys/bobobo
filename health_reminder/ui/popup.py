@@ -107,10 +107,28 @@ class PopupManager:
         seconds = max(5, min(1800, seconds))
         return seconds * 1000
 
-    def show_away_reason(self, on_select: Callable[[str], None]) -> None:
+    def has_active_away_reason(self) -> bool:
+        """返回当前是否已经有中央离席原因弹窗。"""
+        if not self._away_active:
+            return False
+        try:
+            if self._away_active.winfo_exists():
+                return True
+        except tk.TclError:
+            pass
+        self._away_active = None
+        return False
+
+    def show_away_reason(self, on_select: Callable[[str], None]) -> bool:
         """显示屏幕中央离席原因选择弹窗。"""
-        if self._away_active and self._away_active.winfo_exists():
-            return
+        if self.has_active_away_reason():
+            try:
+                self._away_active.lift()
+                self._away_active.focus_force()
+            except tk.TclError:
+                self._away_active = None
+            else:
+                return False
         self._play_sound()
         win = ctk.CTkToplevel(self.root)
         self._away_active = win
@@ -179,6 +197,7 @@ class PopupManager:
         self.root.bind_all("<Escape>", close_without_record)
         win.protocol("WM_DELETE_WINDOW", lambda: choose("未记录"))
         win.after(50, lambda: (win.lift(), win.focus_force()))
+        return True
 
     def _play_sound(self) -> None:
         play_ribbit(self.get_sound_volume())

@@ -205,6 +205,37 @@ class ReminderDecisionEngineTest(unittest.TestCase):
 
         fake.popup.show_reminder.assert_called_once()
 
+    def test_away_reason_event_is_ignored_when_center_popup_is_active(self):
+        fake = SimpleNamespace(
+            _stopping=False,
+            popup=Mock(),
+            logger=Mock(),
+            _pending_away_context={"duration_seconds": 120},
+        )
+        fake.popup.has_active_away_reason.return_value = True
+
+        AppController._handle_ui_event(fake, "away_reason", {"duration_seconds": 300})
+
+        fake.popup.show_away_reason.assert_not_called()
+        self.assertEqual(fake._pending_away_context, {"duration_seconds": 120})
+        fake.logger.log.assert_called_with("away_reason_popup_skipped", "already active")
+
+    def test_away_reason_event_sets_context_only_when_popup_can_open(self):
+        fake = SimpleNamespace(
+            _stopping=False,
+            popup=Mock(),
+            logger=Mock(),
+            _pending_away_context={},
+            _record_away_reason=lambda reason: None,
+        )
+        fake.popup.has_active_away_reason.return_value = False
+        fake.popup.show_away_reason.return_value = True
+
+        AppController._handle_ui_event(fake, "away_reason", {"duration_seconds": 300})
+
+        self.assertEqual(fake._pending_away_context, {"duration_seconds": 300})
+        fake.popup.show_away_reason.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -169,8 +169,12 @@ class AppController:
             self._show_reminder(payload)
             return
         if kind == "away_reason":
+            if self.popup.has_active_away_reason():
+                self.logger.log("away_reason_popup_skipped", "already active")
+                return
             self._pending_away_context = payload if isinstance(payload, dict) else {}
-            self.popup.show_away_reason(self._record_away_reason)
+            if not self.popup.show_away_reason(self._record_away_reason):
+                self.logger.log("away_reason_popup_skipped", "already active")
             return
         if kind == "pause_reminders":
             self.service.pause_for(int(payload))
@@ -261,7 +265,10 @@ class AppController:
         self.logger.log("test_popup", "shown")
 
     def _test_center_popup(self) -> None:
-        self.popup.show_away_reason(lambda reason: self.logger.log("test_center_popup", reason))
+        if not self.popup.show_away_reason(
+            lambda reason: self.logger.log("test_center_popup", reason)
+        ):
+            self.logger.log("test_center_popup_skipped", "already active")
 
     def _handle_tk_error(self, exc: type[BaseException], value: BaseException, _traceback) -> None:
         self.logger.log("tk_error", f"{exc.__name__}: {value}")
