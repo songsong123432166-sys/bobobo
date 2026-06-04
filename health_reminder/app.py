@@ -181,6 +181,16 @@ class AppController:
             return
 
     def _show_reminder(self, event: ReminderEvent) -> None:
+        if self.config.get("system", {}).get("popup_mode", "app") == "system":
+            from .ui.system_notifier import show_reminder_notification
+
+            show_reminder_notification(
+                event,
+                on_water=self._confirm_water,
+                on_snooze=self._snooze_water,
+            )
+            return
+
         self.popup.show_reminder(
             event,
             on_water=self._confirm_water,
@@ -247,11 +257,7 @@ class AppController:
         return message
 
     def _test_popup(self) -> None:
-        self.popup.show_reminder(
-            ReminderEvent("sedentary", "测试提醒", "这是右下角提醒弹窗测试。"),
-            on_water=lambda _ml=250: None,
-            on_snooze=lambda: None,
-        )
+        self._show_reminder(ReminderEvent("sedentary", "测试提醒", "这是右下角提醒弹窗测试。"))
         self.logger.log("test_popup", "shown")
 
     def _test_center_popup(self) -> None:

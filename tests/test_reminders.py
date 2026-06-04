@@ -4,11 +4,13 @@ from queue import Queue
 from types import SimpleNamespace
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import Mock, patch
 
 from health_reminder.app import AppController
 from health_reminder.core.config import DEFAULT_CONFIG
 from health_reminder.core.event_log import EventLogger
 from health_reminder.core.health_state import HealthStateStore
+from health_reminder.services.reminders import ReminderEvent
 from health_reminder.services.reminders import ReminderDecisionEngine, in_do_not_disturb
 from health_reminder.services.reminders import ReminderService
 
@@ -167,6 +169,41 @@ class ReminderDecisionEngineTest(unittest.TestCase):
                 EventLogger(root / "run.log"),
             )
             self.assertIn("隐私模式", service.camera_diagnostic())
+
+    def test_test_popup_uses_system_notification_when_configured(self):
+        config = DEFAULT_CONFIG.copy()
+        config["system"] = {**config["system"], "popup_mode": "system"}
+        fake = SimpleNamespace(
+            config=config,
+            _confirm_water=lambda _ml=250: None,
+            _snooze_water=lambda: None,
+            popup=Mock(),
+        )
+
+        with patch("health_reminder.ui.system_notifier.show_reminder_notification") as notify:
+            AppController._show_reminder(
+                fake,
+                ReminderEvent("sedentary", "测试提醒", "这是右下角提醒弹窗测试。"),
+            )
+
+        notify.assert_called_once()
+        fake.popup.show_reminder.assert_not_called()
+
+    def test_test_popup_uses_app_popup_by_default(self):
+        config = DEFAULT_CONFIG.copy()
+        fake = SimpleNamespace(
+            config=config,
+            _confirm_water=lambda _ml=250: None,
+            _snooze_water=lambda: None,
+            popup=Mock(),
+        )
+
+        AppController._show_reminder(
+            fake,
+            ReminderEvent("sedentary", "测试提醒", "这是右下角提醒弹窗测试。"),
+        )
+
+        fake.popup.show_reminder.assert_called_once()
 
 
 if __name__ == "__main__":
