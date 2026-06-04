@@ -73,6 +73,7 @@ class AppController:
         self.ui_queue: queue.Queue[tuple[str, Any]] = queue.Queue()
 
         self._stopping = False
+        self._pending_away_context: dict[str, Any] = {}
 
         ctk.set_appearance_mode("light")
 
@@ -325,6 +326,8 @@ class AppController:
 
         if kind == "away_reason":
 
+            self._pending_away_context = payload if isinstance(payload, dict) else {}
+
             self.popup.show_away_reason(self._record_away_reason)
 
             return
@@ -390,15 +393,36 @@ class AppController:
 
     def _record_away_reason(self, reason: str) -> None:
 
+        should_count_stand = self._should_count_away_as_stand(reason, self._pending_away_context)
+
         if reason != "未记录":
 
-            self.state.record_away_reason(reason)
+            self.state.record_away_reason(reason, count_stand=should_count_stand)
 
-            self.logger.log("away_reason", reason)
+            suffix = " stand_counted" if should_count_stand else ""
+            self.logger.log("away_reason", f"{reason}{suffix}")
 
         else:
 
             self.logger.log("away_reason_skipped", "user skipped")
+
+        self._pending_away_context = {}
+
+    def _should_count_away_as_stand(self, reason: str, context: dict[str, Any]) -> bool:
+        """判断一次离席是否可以折算为健康起身。"""
+        if context.get("stand_counted", False):
+            return False
+        if reason == "未记录":
+            return False
+        excluded = ("抽烟", "抽根", "开会", "外勤")
+        if any(item in reason for item in excluded):
+            return False
+        detection = self.config.get("detection", {})
+        max_seconds = int(detection.get("away_to_stand_max_seconds", 1200))
+        min_sedentary = int(detection.get("away_to_stand_min_sedentary_seconds", 300))
+        duration = int(context.get("duration_seconds", 0))
+        sedentary = int(context.get("sedentary_seconds", 0))
+        return 0 < duration <= max_seconds and sedentary >= min_sedentary
 
 
 

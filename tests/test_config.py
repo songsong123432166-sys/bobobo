@@ -20,6 +20,8 @@ class ConfigStoreTest(unittest.TestCase):
             self.assertEqual(config["detection"]["camera_idle_threshold_seconds"], 20)
             self.assertEqual(config["detection"]["camera_interval_seconds"], 15)
             self.assertEqual(config["detection"]["camera_away_interval_seconds"], 60)
+            self.assertEqual(config["detection"]["away_to_stand_max_seconds"], 1200)
+            self.assertEqual(config["detection"]["away_to_stand_min_sedentary_seconds"], 300)
             self.assertFalse(config["detection"]["privacy_mode"])
             self.assertEqual(config["goals"]["water_ml"], 2000)
             self.assertEqual(config["goals"]["stand_count"], 8)

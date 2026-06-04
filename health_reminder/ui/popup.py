@@ -216,7 +216,7 @@ class PopupManager:
 
 
 
-        width, height = scaling.s(360), scaling.s(230)
+        width, height = scaling.s(360), scaling.s(260)
 
         x = (self.root.winfo_screenwidth() - width) // 2
 
@@ -248,7 +248,7 @@ class PopupManager:
 
         grid.pack(fill="x")
 
-        reasons = ["上厕所", "抽根烟", "蒙多想去哪就去哪"]
+        reasons = ["上厕所", "开会", "抽根烟", "外勤", "活动一下"]
 
 
 

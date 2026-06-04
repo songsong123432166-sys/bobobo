@@ -151,23 +151,21 @@ class HealthStateStore:
             day["smoke_count"] = int(day.get("smoke_count", 0)) + max(0, count)
             self._save(data)
 
-    def record_away_reason(self, reason: str) -> None:
+    def record_away_reason(self, reason: str, count_stand: bool = False) -> None:
         """记录离席原因。"""
         now = datetime.now().isoformat(timespec="seconds")
         entry = {"time": now, "reason": reason}
         with self._lock:
-            self.increment("away_count", 1)
+            data = self._load()
+            day = self._day(data)
+            if count_stand:
+                day["stand_count"] = int(day.get("stand_count", 0)) + 1
             # Auto-map away reasons to scoring
             if "上厕所" in reason:  # contains toilet
-                data = self._load()
-                day = self._day(data)
                 day["toilet_count"] = int(day.get("toilet_count", 0)) + 1
-                self._save(data)
             elif "抽烟" in reason or "抽根" in reason:  # contains smoke
-                data = self._load()
-                day = self._day(data)
                 day["smoke_count"] = int(day.get("smoke_count", 0)) + 1
-                self._save(data)
+            self._save(data)
             data = read_json(self.away_path, {"items": []})
             if not isinstance(data, dict):
                 data = {"items": []}

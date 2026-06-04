@@ -38,6 +38,8 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "stand_watch_interval_seconds": 20,
         "stand_watch_duration_seconds": 180,
         "center_popup_enabled": True,
+        "away_to_stand_max_seconds": 1200,
+        "away_to_stand_min_sedentary_seconds": 300,
     },
     "system": {
         "autostart": False,

@@ -62,6 +62,15 @@ class HealthStateTest(unittest.TestCase):
             self.assertEqual(today.presence_status, "away_short")
             self.assertEqual(today.sedentary_seconds, 0)
 
+    def test_away_reason_does_not_increment_away_count_but_can_count_stand(self):
+        with TemporaryDirectory() as temp:
+            store = HealthStateStore(Path(temp) / "health_score.json", Path(temp) / "away_reason.json")
+            store.record_away_reason("上厕所", count_stand=True)
+            today = store.today()
+            self.assertEqual(today.away_count, 0)
+            self.assertEqual(today.stand_count, 1)
+            self.assertEqual(today.toilet_count, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

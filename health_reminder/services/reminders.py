@@ -294,6 +294,8 @@ class ReminderService:
         self._away_started_mono: float | None = None
 
         self._sedentary_started_mono: float = time.monotonic()
+        self._away_sedentary_seconds = 0
+        self._away_stand_counted = False
 
         self._camera_misses = 0
 
@@ -391,19 +393,21 @@ class ReminderService:
 
             self._check_work_events(now, config)
 
+        now_mono = time.monotonic()
 
         event = self.engine.due(now, config, paused=paused)
 
         if event is not None:
 
             self.logger.log("reminder_fired", event.kind)
+            if event.kind in ("sedentary", "combined"):
+                self.state.increment("sedentary_alerts", 1)
+                self._start_stand_watch(now_mono, config)
 
             self.ui_queue.put(("reminder", event))
 
 
         idle = seconds_since_last_input()
-
-        now_mono = time.monotonic()
 
         self._update_presence_from_input(now_mono, idle, config)
 
@@ -629,6 +633,9 @@ class ReminderService:
     def _mark_present(self, now_mono: float, source: str) -> None:
 
         was_away = self._presence_status != "using"
+        away_duration = 0
+        if was_away and self._away_started_mono is not None:
+            away_duration = max(0, int(now_mono - self._away_started_mono))
 
         self._presence_status = "using"
 
@@ -650,9 +657,16 @@ class ReminderService:
 
             if self._away_pending and self._center_popup_enabled():
 
-                self.ui_queue.put(("away_reason", None))
+                self.ui_queue.put(("away_reason", {
+                    "duration_seconds": away_duration,
+                    "sedentary_seconds": self._away_sedentary_seconds,
+                    "stand_counted": self._away_stand_counted,
+                    "return_source": source,
+                }))
 
             self._away_pending = False
+            self._away_sedentary_seconds = 0
+            self._away_stand_counted = False
 
 
     def _mark_absent(self, now_mono: float, source: str) -> None:
@@ -662,6 +676,8 @@ class ReminderService:
             self.logger.log("presence_away", source)
 
             self._away_started_mono = now_mono
+            self._away_sedentary_seconds = max(0, int(now_mono - self._sedentary_started_mono))
+            self._away_stand_counted = source == "stand_confirmed"
 
             self._sedentary_started_mono = now_mono
 
